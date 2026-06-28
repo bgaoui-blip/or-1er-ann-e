@@ -1,0 +1,28 @@
+{
+  "entities": {
+    "StudentRegistration": {
+      "title": "StudentRegistration",
+      "description": "Information about a student registration, their details, and their ranked orientation preferences.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique registration document identifier" },
+        "firstName": { "type": "string", "description": "Student first name" },
+        "lastName": { "type": "string", "description": "Student last name" },
+        "dateOfBirth": { "type": "string", "description": "Student date of birth in YYYY-MM-DD format" },
+        "studentCardNumber": { "type": "string", "description": "Unique student card number" },
+        "firstYearSpecialty": { "type": "string", "description": "Student specialty from the first year" },
+        "rankedGroups": { "type": "array", "description": "Ranked array of preferred groups (A, B, C)" },
+        "registrationDate": { "type": "string", "format": "date-time", "description": "Timestamp of registration" },
+        "ipAddress": { "type": "string", "description": "IP address of the student" },
+        "userAgent": { "type": "string", "description": "User agent of the student browser" }
+      },
+      "required": ["id", "firstName", "lastName", "dateOfBirth", "studentCardNumber", "firstYearSpecialty", "rankedGroups", "registrationDate"]
+    }
+  },
+  "firestore": {
+    "registrations/{registrationId}": {
+      "schema": "StudentRegistration",
+      "description": "Registered engineering orientation preferences for students"
+    }
+  }
+}

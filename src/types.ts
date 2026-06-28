@@ -29,3 +29,10 @@ export interface GroupDefinition {
   descriptionFr: string;
   specialties: Specialty[];
 }
+
+export interface PortalSettings {
+  startDate: string; // e.g. "2026-06-25T08:00"
+  endDate: string;   // e.g. "2026-07-15T23:59"
+  manualClose: boolean;
+}
+

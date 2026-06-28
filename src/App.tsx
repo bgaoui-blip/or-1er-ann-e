@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StudentRegistration } from './types';
+import { StudentRegistration, PortalSettings } from './types';
 import { MOCK_REGISTRATIONS } from './data';
 import RegistrationForm from './components/RegistrationForm';
 import RegistrationReceipt from './components/RegistrationReceipt';
 import AdminDashboard from './components/AdminDashboard';
-import { GraduationCap, Users, User, Settings, Sparkles, LayoutDashboard, FileCheck, CheckCircle, Info, Lock, LogOut, KeyRound, Eye, EyeOff, ShieldCheck, X } from 'lucide-react';
+import { GraduationCap, Users, User, Settings, Sparkles, LayoutDashboard, FileCheck, CheckCircle, Info, Lock, LogOut, KeyRound, Eye, EyeOff, ShieldCheck, X, Clock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -12,6 +12,13 @@ import { db } from './lib/firebase';
 export default function App() {
   const [registrations, setRegistrations] = useState<StudentRegistration[]>([]);
   const [currentView, setCurrentView] = useState<'student-form' | 'student-receipt' | 'admin'>('student-form');
+  
+  // Registration Portal Settings state
+  const [portalSettings, setPortalSettings] = useState<PortalSettings>({
+    startDate: '2026-06-25T08:00',
+    endDate: '2026-07-15T23:59',
+    manualClose: false
+  });
   const [activeRegistration, setActiveRegistration] = useState<StudentRegistration | null>(null);
 
   // Admin Authentication State
@@ -68,10 +75,18 @@ export default function App() {
     const cleanEmail = adminEmail.trim().toLowerCase();
     const cleanPassword = adminPassword.trim();
 
-    const allowedEmails = ['admin@lagh-univ.dz', 'b.gaoui@lagh-univ.dz'];
+    const allowedEmails = ['admin@lagh-univ.dz', 'b.gaoui@lagh-univ.dz', 'responsable@lagh-univ.dz'];
+    
+    // Check if the email is a specialty manager email (starts with resp. or responsable. and ends with @lagh-univ.dz)
+    const isSpecialtyManagerEmail = cleanEmail.endsWith('@lagh-univ.dz') && (
+      cleanEmail.startsWith('resp.') || 
+      cleanEmail.startsWith('responsable.')
+    );
+
+    const isAllowedEmail = allowedEmails.includes(cleanEmail) || isSpecialtyManagerEmail;
     const allowedPasswords = ['laghouat2026'];
 
-    if (allowedEmails.includes(cleanEmail) && allowedPasswords.includes(cleanPassword)) {
+    if (isAllowedEmail && allowedPasswords.includes(cleanPassword)) {
       setIsAdminLoggedIn(true);
       sessionStorage.setItem('jst_admin_logged_in', 'true');
       sessionStorage.setItem('jst_admin_email', cleanEmail);
@@ -81,7 +96,7 @@ export default function App() {
       setLoginError('');
       setCurrentView('admin');
     } else {
-      setLoginError('البريد الإلكتروني أو كلمة المرور غير صحيحة! / Email ou mot de passe incorrect !');
+      setLoginError('البريد الإلكتروني أو كلمة المرور غير صحيحة! يرجى استخدام البريد الجامعي المعتمد للمشرف أو مسؤول التخصص. / Email ou mot de passe incorrect !');
     }
   };
 
@@ -90,6 +105,45 @@ export default function App() {
     sessionStorage.removeItem('jst_admin_logged_in');
     sessionStorage.removeItem('jst_admin_email');
     setCurrentView('student-form');
+  };
+
+  // Real-time Firestore Portal Settings synchronization on mount
+  useEffect(() => {
+    const settingsDocRef = doc(db, 'settings', 'portal');
+    const unsubscribe = onSnapshot(settingsDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setPortalSettings(docSnap.data() as PortalSettings);
+      } else {
+        // Seed default settings if not present
+        const defaultSettings: PortalSettings = {
+          startDate: '2026-06-25T08:00',
+          endDate: '2026-07-15T23:59',
+          manualClose: false
+        };
+        setDoc(settingsDocRef, defaultSettings).catch(err => console.error("Error seeding settings:", err));
+        setPortalSettings(defaultSettings);
+      }
+    }, (error) => {
+      console.error("Error listening to settings:", error);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const isPortalOpen = () => {
+    if (portalSettings.manualClose) return false;
+    const now = new Date();
+    const start = new Date(portalSettings.startDate);
+    const end = new Date(portalSettings.endDate);
+    return now >= start && now <= end;
+  };
+
+  const handleUpdatePortalSettings = async (newSettings: PortalSettings) => {
+    try {
+      await setDoc(doc(db, 'settings', 'portal'), newSettings);
+    } catch (error) {
+      console.error("Error writing settings:", error);
+      throw error;
+    }
   };
 
   // Real-time Firestore synchronization on mount
@@ -420,10 +474,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-950/40 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full ml-1.5 animate-pulse" />
-              النظام مفتوح حالياً / Système Ouvert
-            </span>
+            {isPortalOpen() ? (
+              <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-950/40 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30 animate-pulse">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full ml-1.5" />
+                النظام مفتوح حالياً / Système Ouvert
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-950/40 px-3 py-1 text-xs font-bold text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/30">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full ml-1.5 animate-bounce" />
+                النظام مغلق حالياً / Système Fermé
+              </span>
+            )}
           </div>
         </header>
 
@@ -438,6 +499,8 @@ export default function App() {
                 setActiveRegistration(reg);
                 setCurrentView('student-receipt');
               }}
+              portalSettings={portalSettings}
+              isPortalOpen={isPortalOpen()}
             />
           )}
 
@@ -459,6 +522,8 @@ export default function App() {
                 onClearAll={handleClearAll}
                 onResetToMockData={handleResetToMockData}
                 onImportRegistrations={handleImportRegistrations}
+                portalSettings={portalSettings}
+                onUpdatePortalSettings={handleUpdatePortalSettings}
               />
             ) : (
               <div className="max-w-md mx-auto my-12 text-center p-8 bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-950/40 shadow-xl" dir="rtl">
@@ -530,9 +595,15 @@ export default function App() {
                 )}
 
                 {/* Info block regarding hidden entry */}
-                <div className="bg-slate-50 dark:bg-slate-950/50 p-3 rounded-xl border border-slate-100 dark:border-slate-850 text-[10px] text-slate-500 leading-normal text-right">
-                  هذا المدخل مخصص لإدارة الموقع فقط. الطلاب لا يمكنهم رؤية أو تصفح لوحة التحكم.
-                  <span className="block font-mono text-[9px] mt-1 text-slate-400">Ctrl + Shift + A to toggle.</span>
+                <div className="bg-slate-50 dark:bg-slate-950/50 p-3.5 rounded-xl border border-slate-150 dark:border-slate-850 text-[10px] text-slate-550 dark:text-slate-400 leading-normal text-right space-y-1.5">
+                  <p className="font-bold text-slate-700 dark:text-slate-300">📌 بوابات الدخول المعتمدة للمشرفين ومسؤولي التخصصات:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-slate-550 dark:text-slate-400">
+                    <li>المشرف العام: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">b.gaoui@lagh-univ.dz</code></li>
+                    <li>مدير النظام: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">admin@lagh-univ.dz</code></li>
+                    <li>مسؤولو التخصصات: البريد المعتمد بصيغة <code className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">resp.specialite@lagh-univ.dz</code> أو <code className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">responsable.a/b/c@lagh-univ.dz</code></li>
+                    <li>الرمز السري الموحد: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">laghouat2026</code></li>
+                  </ul>
+                  <span className="block font-mono text-[9px] mt-1 text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">Ctrl + Shift + A to toggle.</span>
                 </div>
 
                 {/* Email Field */}

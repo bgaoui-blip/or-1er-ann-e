@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { StudentRegistration, GroupDefinition } from '../types';
+import { StudentRegistration, GroupDefinition, PortalSettings } from '../types';
 import { GROUPS_DATA } from '../data';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, IdCard, Calendar, Award, ArrowRight, ArrowLeft, ChevronRight, Check, CheckCircle2, GraduationCap, AlertCircle, ArrowUp, ArrowDown, Lock, Search, ShieldCheck, Printer, Edit, RefreshCw } from 'lucide-react';
@@ -8,9 +8,17 @@ interface RegistrationFormProps {
   onRegisterComplete: (registration: StudentRegistration) => void;
   registrations: StudentRegistration[];
   onViewReceipt: (registration: StudentRegistration) => void;
+  portalSettings?: PortalSettings;
+  isPortalOpen?: boolean;
 }
 
-export default function RegistrationForm({ onRegisterComplete, registrations = [], onViewReceipt }: RegistrationFormProps) {
+export default function RegistrationForm({ 
+  onRegisterComplete, 
+  registrations = [], 
+  onViewReceipt,
+  portalSettings,
+  isPortalOpen = true
+}: RegistrationFormProps) {
   const [step, setStep] = useState<1 | 2>(1);
   
   // Navigation Tab State
@@ -590,7 +598,55 @@ export default function RegistrationForm({ onRegisterComplete, registrations = [
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.25 }}
           >
-            {/* Step Tracker Indicator */}
+            {!isPortalOpen ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl shadow-xl p-8 sm:p-12 text-center space-y-6" dir="rtl">
+                <div className="inline-flex p-4 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-3xl border border-amber-100 dark:border-amber-900/20 animate-bounce">
+                  <Lock className="h-10 w-10" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">بوابة تسجيل الرغبات مغلقة حالياً</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Le portail d'orientation est actuellement fermé</p>
+                </div>
+
+                {portalSettings && (
+                  <div className="max-w-md mx-auto p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-4">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">الفترة الرسمية لتسجيل وتعديل الرغبات:</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right">
+                      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-bold">تاريخ الافتتاح / Date d'ouverture</span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mt-1 leading-relaxed">
+                          {formatDateTime(portalSettings.startDate)}
+                        </span>
+                      </div>
+
+                      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-bold">تاريخ الاختتام / Date de clôture</span>
+                        <span className="text-xs font-bold text-red-600 dark:text-red-400 block mt-1 leading-relaxed">
+                          {formatDateTime(portalSettings.endDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">
+                  <p>⚠️ الطلاب الذين قاموا بالتسجيل مسبقاً يمكنهم دائماً التحقق من رغباتهم وتحميل وصل التسجيل الخاص بهم من خلال الانتقال إلى علامة التبويب <strong>"التحقق من التسجيل"</strong> في الأعلى.</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('verify')}
+                  className="mt-2 inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-600/15 hover:shadow-lg transition duration-150 cursor-pointer"
+                >
+                  <Search className="h-4 w-4" />
+                  <span>انتقل إلى التحقق من التسجيل / Aller à la vérification</span>
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Step Tracker Indicator */}
             <div className="mb-8 relative">
               <div className="flex justify-between items-center max-w-md mx-auto relative z-10">
                 
@@ -1144,6 +1200,8 @@ export default function RegistrationForm({ onRegisterComplete, registrations = [
         </form>
 
       </div>
+              </>
+            )}
     </motion.div>
   )}
 </AnimatePresence>

@@ -17,12 +17,27 @@
         "userAgent": { "type": "string", "description": "User agent of the student browser" }
       },
       "required": ["id", "firstName", "lastName", "dateOfBirth", "studentCardNumber", "firstYearSpecialty", "rankedGroups", "registrationDate"]
+    },
+    "PortalSettings": {
+      "title": "PortalSettings",
+      "description": "Orientation portal open/close dates and manual override settings.",
+      "type": "object",
+      "properties": {
+        "startDate": { "type": "string", "description": "ISO start date-time when registrations open" },
+        "endDate": { "type": "string", "description": "ISO end date-time when registrations close" },
+        "manualClose": { "type": "boolean", "description": "Flag to manually force-close the registration portal" }
+      },
+      "required": ["startDate", "endDate", "manualClose"]
     }
   },
   "firestore": {
     "registrations/{registrationId}": {
       "schema": "StudentRegistration",
       "description": "Registered engineering orientation preferences for students"
+    },
+    "settings/{settingId}": {
+      "schema": "PortalSettings",
+      "description": "Global settings for the registration and orientation portal"
     }
   }
 }

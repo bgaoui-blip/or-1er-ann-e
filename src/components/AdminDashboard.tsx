@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { StudentRegistration } from '../types';
+import { StudentRegistration, PortalSettings } from '../types';
 import { GROUPS_DATA } from '../data';
-import { Search, Trash2, FileSpreadsheet, RefreshCw, Filter, Users, Award, TrendingUp, CheckCircle, HelpCircle, GraduationCap, PieChart } from 'lucide-react';
+import { Search, Trash2, FileSpreadsheet, RefreshCw, Filter, Users, Award, TrendingUp, CheckCircle, HelpCircle, GraduationCap, PieChart, Calendar, Clock, Save, Lock, Unlock } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface AdminDashboardProps {
@@ -10,6 +10,8 @@ interface AdminDashboardProps {
   onClearAll: () => void;
   onResetToMockData: () => void;
   onImportRegistrations: (imported: StudentRegistration[]) => void;
+  portalSettings: PortalSettings;
+  onUpdatePortalSettings: (settings: PortalSettings) => Promise<void>;
 }
 
 export default function AdminDashboard({
@@ -17,11 +19,80 @@ export default function AdminDashboard({
   onDeleteRegistration,
   onClearAll,
   onResetToMockData,
-  onImportRegistrations
+  onImportRegistrations,
+  portalSettings,
+  onUpdatePortalSettings
 }: AdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('all');
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>(() => {
+    const email = sessionStorage.getItem('jst_admin_email') || '';
+    const clean = email.toLowerCase().trim();
+    if (
+      clean.includes('resp.a@') || clean.includes('responsable.a@') ||
+      clean.includes('electrique') || clean.includes('electronique') || 
+      clean.includes('automatique') || clean.includes('telecommunications') || 
+      clean.includes('telecom') || clean.includes('energie')
+    ) return 'A';
+    if (
+      clean.includes('resp.b@') || clean.includes('responsable.b@') ||
+      clean.includes('mecanique') || clean.includes('civil') || 
+      clean.includes('climatique') || clean.includes('hydraulique') || 
+      clean.includes('transport') || clean.includes('aeronautique')
+    ) return 'B';
+    if (
+      clean.includes('resp.c@') || clean.includes('responsable.c@') ||
+      clean.includes('procedes') || clean.includes('minier') || 
+      clean.includes('hydrocarbures') || clean.includes('securite') || 
+      clean.includes('petrochimie') || clean.includes('environnement')
+    ) return 'C';
+    return 'all';
+  });
   const [hoveredSegment, setHoveredSegment] = useState<'A' | 'B' | 'C' | null>(null);
+
+  // Portal Settings editing states
+  const [startDate, setStartDate] = useState(portalSettings?.startDate || '2026-06-25T08:00');
+  const [endDate, setEndDate] = useState(portalSettings?.endDate || '2026-07-15T23:59');
+  const [manualClose, setManualClose] = useState(portalSettings?.manualClose || false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  React.useEffect(() => {
+    if (portalSettings) {
+      setStartDate(portalSettings.startDate);
+      setEndDate(portalSettings.endDate);
+      setManualClose(portalSettings.manualClose);
+    }
+  }, [portalSettings]);
+
+  const handleSavePortalSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      await onUpdatePortalSettings({
+        startDate,
+        endDate,
+        manualClose
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
+  const getPortalStatus = () => {
+    if (manualClose) return { label: 'مغلق (إغلاق يدوي فوري)', labelFr: 'Fermé (Fermeture manuelle)', color: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30', dot: 'bg-red-500' };
+    const now = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (now < start) {
+      return { label: 'لم يبدأ بعد (مغلق تلقائياً)', labelFr: 'Pas encore ouvert', color: 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30', dot: 'bg-amber-500 animate-pulse' };
+    } else if (now > end) {
+      return { label: 'منتهي ومغلق تلقائياً', labelFr: 'Clôturé automatiquement', color: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30', dot: 'bg-rose-500' };
+    } else {
+      return { label: 'مفتوح ومتاح حالياً للطلبة', labelFr: 'Ouvert et actif', color: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30', dot: 'bg-emerald-500 animate-pulse' };
+    }
+  };
 
   // Compute stats
   const totalCount = registrations.length;
@@ -203,7 +274,54 @@ export default function AdminDashboard({
   };
 
   const adminEmail = sessionStorage.getItem('jst_admin_email') || '';
-  const isSuperAdmin = adminEmail.toLowerCase().trim() === 'b.gaoui@lagh-univ.dz';
+  
+  const managerRole = React.useMemo(() => {
+    const clean = adminEmail.toLowerCase().trim();
+    if (clean === 'b.gaoui@lagh-univ.dz') {
+      return { isSuperAdmin: true, title: 'المشرف العام (أ. ب. غاوي)', group: 'all', titleFr: 'Super Administrateur (Pr. B. Gaoui)' };
+    }
+    if (clean === 'admin@lagh-univ.dz') {
+      return { isSuperAdmin: false, title: 'مدير النظام', group: 'all', titleFr: 'Administrateur Système' };
+    }
+    if (clean === 'responsable@lagh-univ.dz') {
+      return { isSuperAdmin: false, title: 'مسؤول التخصصات العام', group: 'all', titleFr: 'Responsable Général des Spécialités' };
+    }
+    
+    // Group A keywords
+    if (
+      clean.includes('resp.a@') || clean.includes('responsable.a@') ||
+      clean.includes('electrique') || clean.includes('electronique') || 
+      clean.includes('automatique') || clean.includes('telecommunications') || 
+      clean.includes('telecom') || clean.includes('energie')
+    ) {
+      return { isSuperAdmin: false, title: 'مسؤول تخصصات الفوج A (هندسة كهربائية وإلكترونيات)', group: 'A', titleFr: 'Responsable Groupe A (Génie Électrique & Électronique)' };
+    }
+    
+    // Group B keywords
+    if (
+      clean.includes('resp.b@') || clean.includes('responsable.b@') ||
+      clean.includes('mecanique') || clean.includes('civil') || 
+      clean.includes('climatique') || clean.includes('hydraulique') || 
+      clean.includes('transport') || clean.includes('aeronautique')
+    ) {
+      return { isSuperAdmin: false, title: 'مسؤول تخصصات الفوج B (هندسة مدنية وميكانيكية)', group: 'B', titleFr: 'Responsable Groupe B (Génie Civil & Mécanique)' };
+    }
+    
+    // Group C keywords
+    if (
+      clean.includes('resp.c@') || clean.includes('responsable.c@') ||
+      clean.includes('procedes') || clean.includes('minier') || 
+      clean.includes('hydrocarbures') || clean.includes('securite') || 
+      clean.includes('petrochimie') || clean.includes('environnement')
+    ) {
+      return { isSuperAdmin: false, title: 'مسؤول تخصصات الفوج C (هندسة الطرائق ومحروقات)', group: 'C', titleFr: 'Responsable Groupe C (Génie des Procédés & Environnement)' };
+    }
+
+    // Fallback for any other resp.* or @lagh-univ.dz email
+    return { isSuperAdmin: false, title: 'مسؤول تخصص', group: 'all', titleFr: 'Responsable de Spécialité' };
+  }, [adminEmail]);
+
+  const isSuperAdmin = managerRole.isSuperAdmin;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 py-4">
@@ -215,9 +333,19 @@ export default function AdminDashboard({
             <span>لوحة تحكم المشرف</span>
             <GraduationCap className="h-6 w-6 text-emerald-600" />
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            إدارة توجيه طلبة السنة الثانية جذع مشترك ومراقبة الرغبات والتحليلات.
-          </p>
+          <div className="mt-2 flex flex-col items-end gap-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30">
+              <Users className="h-3.5 w-3.5" />
+              <span>{managerRole.title}</span>
+              <span className="opacity-60 text-[10px] font-normal font-sans">| {managerRole.titleFr}</span>
+            </span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {managerRole.group !== 'all' 
+                ? `تصفح ومراقبة رغبات طلاب جذع مشترك للالتحاق بتخصصات الفوج (${managerRole.group}).`
+                : 'إدارة توجيه طلبة السنة الثانية جذع مشترك ومراقبة الرغبات والتحليلات لجميع الأفواج.'
+              }
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
@@ -341,6 +469,105 @@ export default function AdminDashboard({
           </div>
         </div>
 
+      </div>
+
+      {/* Registration Period Management Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden" dir="rtl">
+        <div className="bg-gradient-to-r from-slate-850 to-slate-950 px-6 py-5 text-slate-800 dark:text-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="text-right">
+            <h3 className="text-base font-bold flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <span>إدارة فترة التسجيل وتعديل الرغبات</span>
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1">Gestion de la période d'ouverture et de clôture des inscriptions (Firestore Cloud)</p>
+          </div>
+          
+          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-bold ${getPortalStatus().color}`}>
+            <span className={`w-2 h-2 rounded-full ${getPortalStatus().dot}`} />
+            <span>{getPortalStatus().label}</span>
+            <span className="opacity-60 text-[10px] font-normal font-sans">| {getPortalStatus().labelFr}</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSavePortalSettings} className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            
+            {/* Opening Date & Time */}
+            <div className="space-y-2 text-right">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 justify-start">
+                <Clock className="h-4 w-4 text-emerald-600" />
+                <span>تاريخ ووقت فتح التسجيل:</span>
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150"
+              />
+              <p className="text-[10px] text-slate-400">Date et heure d'ouverture (Format local)</p>
+            </div>
+
+            {/* Closing Date & Time */}
+            <div className="space-y-2 text-right">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 justify-start">
+                <Clock className="h-4 w-4 text-rose-600" />
+                <span>تاريخ ووقت غلق التسجيل:</span>
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150"
+              />
+              <p className="text-[10px] text-slate-400">Date et heure de clôture (Format local)</p>
+            </div>
+
+            {/* Manual Override & Submit Controls */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 justify-end md:col-span-1 pt-2 md:pt-0">
+              
+              {/* Manual Override Option */}
+              <label className="flex items-center gap-2.5 px-4 py-3 bg-slate-50 dark:bg-slate-950/40 hover:bg-slate-100/50 dark:hover:bg-slate-950/70 border border-slate-150 dark:border-slate-850 rounded-xl cursor-pointer select-none transition duration-150 w-full sm:w-auto shrink-0 justify-center">
+                <input
+                  type="checkbox"
+                  checked={manualClose}
+                  onChange={(e) => setManualClose(e.target.checked)}
+                  className="rounded text-indigo-600 focus:ring-indigo-500/20 h-4.5 w-4.5 accent-indigo-600 cursor-pointer"
+                />
+                <div className="text-right">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">إغلاق قسري فوري</span>
+                  <span className="text-[9px] text-slate-400 block mt-0.5">Force-clore maintenant</span>
+                </div>
+              </label>
+
+              {/* Submit Save Button */}
+              <button
+                type="submit"
+                disabled={isSavingSettings}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold transition duration-200 shadow-md ${
+                  isSavingSettings
+                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10 hover:shadow-lg hover:shadow-indigo-600/25 cursor-pointer'
+                }`}
+              >
+                {isSavingSettings ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span>حفظ إعدادات الفترة / Enregistrer</span>
+              </button>
+
+            </div>
+
+          </div>
+          
+          <div className="mt-4 p-3 bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100/40 dark:border-indigo-900/10 rounded-xl text-[10px] text-indigo-800 dark:text-indigo-400 leading-relaxed text-right flex items-center gap-2">
+            <Clock className="h-4 w-4 text-indigo-500 shrink-0 animate-pulse" />
+            <span>سيقوم النظام تلقائياً بفتح التسجيلات للطلبة في التاريخ والوقت المحددين، وسيغلقها فور انتهاء المدة أو عند تفعيل الإغلاق القسري. التغييرات تنعكس مباشرة في قاعدة البيانات.</span>
+          </div>
+        </form>
       </div>
 
       {/* Analytics Visualization Section */}

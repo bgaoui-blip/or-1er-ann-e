@@ -20,6 +20,15 @@ export default function App() {
     manualClose: false
   });
   const [activeRegistration, setActiveRegistration] = useState<StudentRegistration | null>(null);
+  const [nowTime, setNowTime] = useState<Date>(new Date());
+
+  // Real-time interval to keep the portal open/closed checks strictly reactive
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNowTime(new Date());
+    }, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // Admin Authentication State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
@@ -131,10 +140,13 @@ export default function App() {
 
   const isPortalOpen = () => {
     if (portalSettings.manualClose) return false;
-    const now = new Date();
     const start = new Date(portalSettings.startDate);
     const end = new Date(portalSettings.endDate);
-    return now >= start && now <= end;
+    // If dates are invalid, fallback to open
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return true;
+    }
+    return nowTime >= start && nowTime <= end;
   };
 
   const handleUpdatePortalSettings = async (newSettings: PortalSettings) => {
@@ -197,6 +209,10 @@ export default function App() {
 
   // Add a new or update an existing registration in Firestore
   const handleRegisterComplete = async (newReg: StudentRegistration) => {
+    if (!isPortalOpen()) {
+      alert("عذراً، انتهت الفترة الرسمية لتسجيل وتعديل الرغبات ولا يمكن استقبال أي طلبات حالياً. / Le portail d'orientation est fermé.");
+      return;
+    }
     const existing = registrations.find(
       r => r.studentCardNumber.trim().toLowerCase() === newReg.studentCardNumber.trim().toLowerCase()
     );
@@ -434,6 +450,19 @@ export default function App() {
             )}
 
           </nav>
+
+          {/* Real-time Registered Students Count Badge */}
+          <div className="mt-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-inner">
+            <div className="h-12 w-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 border border-indigo-500/30 shrink-0">
+              <Users className="h-6 w-6" />
+            </div>
+            <div className="text-right flex-1">
+              <p className="text-[10px] text-indigo-300 uppercase tracking-wider font-bold">عدد الطلبة المسجلين / Total Inscrits</p>
+              <p className="text-2xl font-black text-white mt-0.5 font-mono">
+                {registrations.length} <span className="text-xs font-normal text-indigo-300">طالب / Étudiants</span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Dynamic Footer Information badge in Sidebar - Sparkles can be clicked secretly */}
@@ -473,7 +502,13 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-3.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30">
+              <Users className="h-3.5 w-3.5 text-indigo-500" />
+              <span>الطلبة المسجلين: <strong className="font-mono text-sm">{registrations.length}</strong></span>
+              <span className="text-[10px] opacity-75">/ Inscrits</span>
+            </div>
+
             {isPortalOpen() ? (
               <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-950/40 px-3 py-1 text-xs font-bold text-green-700 dark:text-green-300 border border-green-200 dark:border-green-900/30 animate-pulse">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full ml-1.5" />
@@ -595,15 +630,11 @@ export default function App() {
                 )}
 
                 {/* Info block regarding hidden entry */}
-                <div className="bg-slate-50 dark:bg-slate-950/50 p-3.5 rounded-xl border border-slate-150 dark:border-slate-850 text-[10px] text-slate-550 dark:text-slate-400 leading-normal text-right space-y-1.5">
-                  <p className="font-bold text-slate-700 dark:text-slate-300">📌 بوابات الدخول المعتمدة للمشرفين ومسؤولي التخصصات:</p>
-                  <ul className="list-disc list-inside space-y-0.5 text-slate-550 dark:text-slate-400">
-                    <li>المشرف العام: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">b.gaoui@lagh-univ.dz</code></li>
-                    <li>مدير النظام: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">admin@lagh-univ.dz</code></li>
-                    <li>مسؤولو التخصصات: البريد المعتمد بصيغة <code className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">resp.specialite@lagh-univ.dz</code> أو <code className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">responsable.a/b/c@lagh-univ.dz</code></li>
-                    <li>الرمز السري الموحد: <code className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">laghouat2026</code></li>
-                  </ul>
-                  <span className="block font-mono text-[9px] mt-1 text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">Ctrl + Shift + A to toggle.</span>
+                <div className="bg-slate-50 dark:bg-slate-950/50 p-3.5 rounded-xl border border-slate-150 dark:border-slate-850 text-[10px] text-slate-550 dark:text-slate-400 leading-normal text-right">
+                  <p className="font-bold text-slate-700 dark:text-slate-300">📌 بوابة الإدارة وتوجيه الرغبات:</p>
+                  <p className="mt-1">هذه البوابة مخصصة حصرياً للمشرفين ومسؤولي التخصصات بجامعة الأغواط لتسيير ومتابعة رغبات توجيه طلبة السنة الثانية جذع مشترك.</p>
+                  <p className="mt-1 text-slate-400">يرجى تسجيل الدخول بالبريد الإلكتروني الجامعي المعتمد والرمز السري الخاص بك.</p>
+                  <span className="block font-mono text-[9px] mt-1.5 text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">Accès restreint aux administrateurs et responsables de spécialités.</span>
                 </div>
 
                 {/* Email Field */}

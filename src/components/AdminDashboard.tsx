@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StudentRegistration, PortalSettings } from '../types';
 import { GROUPS_DATA } from '../data';
-import { Search, Trash2, FileSpreadsheet, RefreshCw, Filter, Users, Award, TrendingUp, CheckCircle, HelpCircle, GraduationCap, PieChart, Calendar, Clock, Save, Lock, Unlock } from 'lucide-react';
+import { Search, Trash2, FileSpreadsheet, RefreshCw, Filter, Users, Award, TrendingUp, CheckCircle, HelpCircle, GraduationCap, PieChart, Calendar, Clock, Save, Lock, Unlock, Download, Upload, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface AdminDashboardProps {
@@ -270,6 +270,65 @@ export default function AdminDashboard({
       }
     };
     reader.readAsBinaryString(file);
+    e.target.value = ''; // Reset input
+  };
+
+  // Download JSON Backup
+  const handleDownloadJSONBackup = () => {
+    if (registrations.length === 0) {
+      alert("لا توجد أي بيانات حالية لتصديرها كنسخة احتياطية! / Aucune donnée à sauvegarder !");
+      return;
+    }
+    try {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(registrations, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `orientation_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err) {
+      console.error("Error creating backup:", err);
+      alert("حدث خطأ أثناء إنشاء ملف النسخة الاحتياطية.");
+    }
+  };
+
+  // Import JSON Backup
+  const handleImportJSONBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const imported = JSON.parse(content);
+        
+        if (!Array.isArray(imported)) {
+          alert('صيغة النسخة الاحتياطية غير صالحة! يجب أن يكون ملف JSON مصفوفة من التسجيلات. / Format de sauvegarde invalide.');
+          return;
+        }
+
+        if (imported.length === 0) {
+          alert('ملف النسخة الاحتياطية فارغ! / Le fichier de sauvegarde est vide !');
+          return;
+        }
+
+        // Validate structure slightly (must have firstName, lastName, studentCardNumber)
+        const validImported = imported.filter(r => r && r.studentCardNumber && r.firstName && r.lastName);
+        if (validImported.length === 0) {
+          alert('لم يتم العثور على أي بيانات طلاب صالحة في ملف النسخة الاحتياطية. / Aucun étudiant valide trouvé.');
+          return;
+        }
+
+        // Send to onImportRegistrations which merges them and saves to Firestore
+        onImportRegistrations(validImported);
+      } catch (err) {
+        console.error("Error reading JSON backup:", err);
+        alert('حدث خطأ أثناء قراءة ملف النسخة الاحتياطية JSON. يرجى التأكد من اختيار ملف صحيح.');
+      }
+    };
+    reader.readAsText(file);
     e.target.value = ''; // Reset input
   };
 
@@ -568,6 +627,91 @@ export default function AdminDashboard({
             <span>سيقوم النظام تلقائياً بفتح التسجيلات للطلبة في التاريخ والوقت المحددين، وسيغلقها فور انتهاء المدة أو عند تفعيل الإغلاق القسري. التغييرات تنعكس مباشرة في قاعدة البيانات.</span>
           </div>
         </form>
+      </div>
+
+      {/* Backup and Restore JSON Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden" dir="rtl">
+        <div className="bg-gradient-to-r from-slate-850 to-slate-950 px-6 py-5 text-slate-800 dark:text-slate-100 flex justify-between items-center border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="text-right">
+            <h3 className="text-base font-bold flex items-center gap-2">
+              <Database className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              <span>النسخ الاحتياطي واستعادة البيانات</span>
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1">Sauvegarde & Restauration des données (Format JSON)</p>
+          </div>
+          <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-150 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-md font-bold">دمج آمن / Fusion Sécurisée</span>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x md:divide-x-reverse divide-slate-100 dark:divide-slate-800">
+            
+            {/* Download Backup Box */}
+            <div className="space-y-4 text-right pb-6 md:pb-0">
+              <div className="flex items-center gap-3 justify-start">
+                <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-100 dark:border-emerald-900/20">
+                  <Download className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">تحميل نسخة احتياطية (JSON)</h4>
+                  <p className="text-[10px] text-slate-400">Télécharger la sauvegarde complète</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                قم بتحميل وتنزيل ملف نسخة احتياطية كاملة لجميع تسجيلات الطلبة الحالية بصيغة JSON. يمكنك الاحتفاظ بهذا الملف على جهازك واستخدامه لاستعادة البيانات أو نقلها في أي وقت.
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadJSONBackup}
+                disabled={totalCount === 0}
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                  totalCount > 0
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/10'
+                    : 'bg-slate-100 dark:bg-slate-850 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                }`}
+              >
+                <Download className="h-4 w-4" />
+                <span>تنزيل النسخة الاحتياطية / Télécharger JSON</span>
+              </button>
+            </div>
+
+            {/* Import Backup Box */}
+            <div className="space-y-4 text-right pt-6 md:pt-0 md:pr-6">
+              <div className="flex items-center gap-3 justify-start">
+                <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-100 dark:border-indigo-900/20">
+                  <Upload className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">استيراد ودمج نسخة احتياطية (JSON)</h4>
+                  <p className="text-[10px] text-slate-400">Importer et fusionner la sauvegarde</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                قم باستيراد بيانات الطلاب من ملف نسخة احتياطية JSON تم تنزيله سابقاً. <strong className="text-indigo-600 dark:text-indigo-400 font-bold">لن يقوم النظام بحذف أو استبدال أي بيانات موجودة مسبقاً</strong>، بل سيقوم فقط بدمج الطلاب الجدد وإضافتهم سحابياً.
+              </p>
+              
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportJSONBackup}
+                className="hidden"
+                id="json-backup-import-input"
+              />
+              <label
+                htmlFor="json-backup-import-input"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 shadow-md shadow-indigo-600/10"
+              >
+                <Upload className="h-4 w-4" />
+                <span>اختيار واستيراد ملف النسخة الاحتياطية / Importer JSON</span>
+              </label>
+            </div>
+
+          </div>
+
+          <div className="mt-6 p-3 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-100/30 dark:border-amber-900/10 rounded-xl text-[10px] text-amber-800 dark:text-amber-400 leading-relaxed text-right flex items-center gap-2">
+            <span className="text-amber-500 shrink-0 font-bold">⚠️ تنويه أمني:</span>
+            <span>عند استيراد النسخة الاحتياطية، تتم مطابقة الطلاب تلقائياً بواسطة رقم بطاقة الطالب الفريد لمنع حدوث أي تكرار أو حذف للبيانات الحالية. العملية آمنة تماماً وتراكمية.</span>
+          </div>
+        </div>
       </div>
 
       {/* Analytics Visualization Section */}

@@ -1,8 +1,8 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { StudentRegistration, GroupDefinition, PortalSettings } from '../types';
 import { GROUPS_DATA } from '../data';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, IdCard, Calendar, Award, ArrowRight, ArrowLeft, ChevronRight, Check, CheckCircle2, GraduationCap, AlertCircle, ArrowUp, ArrowDown, Lock, Search, ShieldCheck, Printer, Edit, RefreshCw } from 'lucide-react';
+import { User, IdCard, Calendar, Clock, Award, ArrowRight, ArrowLeft, ChevronRight, Check, CheckCircle2, GraduationCap, AlertCircle, ArrowUp, ArrowDown, Lock, Search, ShieldCheck, Printer, Edit, RefreshCw } from 'lucide-react';
 
 interface RegistrationFormProps {
   onRegisterComplete: (registration: StudentRegistration) => void;
@@ -44,6 +44,52 @@ export default function RegistrationForm({
 
   // Phase 2 Selection State
   const [rankedGroups, setRankedGroups] = useState<('A' | 'B' | 'C')[]>(['A', 'B', 'C']);
+
+  // Live countdown state
+  const [timeLeft, setTimeLeft] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+    totalMs: number;
+    progress: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!portalSettings) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const start = new Date(portalSettings.startDate);
+      const end = new Date(portalSettings.endDate);
+      
+      const totalMs = end.getTime() - start.getTime();
+      const remainingMs = end.getTime() - now.getTime();
+      
+      if (remainingMs <= 0 || now < start) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: remainingMs, progress: now < start ? 0 : 100 };
+      }
+
+      const elapsed = now.getTime() - start.getTime();
+      const progress = Math.min(100, Math.max(0, (elapsed / totalMs) * 100));
+
+      const days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+
+      return { days, hours, minutes, seconds, totalMs: remainingMs, progress };
+    };
+
+    // Initialize
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [portalSettings]);
 
   // Helper to determine if a group is locked to top based on 1st Year Specialty
   const getRequiredGroup = (specType: string): 'A' | 'B' | 'C' | null => {
@@ -529,26 +575,32 @@ export default function RegistrationForm({
 
                           {/* Action buttons */}
                           <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                // Load into form states to allow modification
-                                setFirstName(verifiedStudent.firstName);
-                                setLastName(verifiedStudent.lastName);
-                                setDateOfBirth(verifiedStudent.dateOfBirth);
-                                setStudentCardNumber(verifiedStudent.studentCardNumber);
-                                setFirstYearSpecialty(verifiedStudent.firstYearSpecialty);
-                                setRankedGroups(verifiedStudent.rankedGroups);
-                                
-                                setHasConfirmedDuplicateAction(true);
-                                setActiveTab('register');
-                                setStep(1);
-                              }}
-                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-200 text-xs font-bold cursor-pointer"
-                            >
-                              <Edit className="h-4 w-4 text-slate-500" />
-                              <span>تعديل الرغبات / Modifier les vœux</span>
-                            </button>
+                            {isPortalOpen ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // Load into form states to allow modification
+                                  setFirstName(verifiedStudent.firstName);
+                                  setLastName(verifiedStudent.lastName);
+                                  setDateOfBirth(verifiedStudent.dateOfBirth);
+                                  setStudentCardNumber(verifiedStudent.studentCardNumber);
+                                  setFirstYearSpecialty(verifiedStudent.firstYearSpecialty);
+                                  setRankedGroups(verifiedStudent.rankedGroups);
+                                  
+                                  setHasConfirmedDuplicateAction(true);
+                                  setActiveTab('register');
+                                  setStep(1);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-200 text-xs font-bold cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4 text-slate-500" />
+                                <span>تعديل الرغبات / Modifier les vœux</span>
+                              </button>
+                            ) : (
+                              <div className="flex-1 p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200/40 rounded-xl text-xs font-semibold leading-relaxed text-center">
+                                لقد انتهت فترة الاختيار والموقع مغلق حالياً. لا يمكن تعديل الرغبات.
+                              </div>
+                            )}
 
                             <button
                               type="button"
@@ -570,18 +622,25 @@ export default function RegistrationForm({
                             <p className="text-xs text-slate-500 dark:text-slate-400">لم يتم العثور على أي تسجيل إلكتروني برقم البطاقة المدخل.</p>
                             <p className="text-[10px] text-slate-400">Aucun enregistrement trouvé avec ce numéro de carte.</p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              // Set student card number automatically and switch to register
-                              setStudentCardNumber(searchCardNumber);
-                              setActiveTab('register');
-                              setStep(1);
-                            }}
-                            className="mt-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition duration-150"
-                          >
-                            سجل رغباتك الآن / S'inscrire maintenant
-                          </button>
+                          
+                          {isPortalOpen ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Set student card number automatically and switch to register
+                                setStudentCardNumber(searchCardNumber);
+                                setActiveTab('register');
+                                setStep(1);
+                              }}
+                              className="mt-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition duration-150"
+                            >
+                              سجل رغباتك الآن / S'inscrire maintenant
+                            </button>
+                          ) : (
+                            <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200/40 rounded-xl text-xs font-bold">
+                              لقد انتهت فترة الاختيار. الموقع مغلق. للاستفسار اتصل بإدارة القسم
+                            </div>
+                          )}
                         </div>
                       )}
                     </motion.div>
@@ -599,19 +658,20 @@ export default function RegistrationForm({
             transition={{ duration: 0.25 }}
           >
             {!isPortalOpen ? (
-              <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-3xl shadow-xl p-8 sm:p-12 text-center space-y-6" dir="rtl">
-                <div className="inline-flex p-4 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-3xl border border-amber-100 dark:border-amber-900/20 animate-bounce">
+              <div className="bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/50 rounded-3xl shadow-xl p-8 sm:p-12 text-center space-y-6" dir="rtl">
+                <div className="inline-flex p-4 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-3xl border border-red-100 dark:border-red-900/20 animate-bounce">
                   <Lock className="h-10 w-10" />
                 </div>
                 
-                <div className="space-y-2">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">بوابة تسجيل الرغبات مغلقة حالياً</h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Le portail d'orientation est actuellement fermé</p>
+                <div className="space-y-3">
+                  <h2 className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">لقد انتهت فترة الاختيار. الموقع مغلق.</h2>
+                  <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-bold">للاستفسار اتصل بإدارة القسم</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">La période de sélection est terminée. Le site est fermé. Pour toute information, veuillez contacter l'administration du département.</p>
                 </div>
 
                 {portalSettings && (
                   <div className="max-w-md mx-auto p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-4">
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">الفترة الرسمية لتسجيل وتعديل الرغبات:</p>
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">تفاصيل فترة التسجيل المنتهية:</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right">
                       <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-150 dark:border-slate-800">
@@ -631,21 +691,83 @@ export default function RegistrationForm({
                   </div>
                 )}
 
-                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">
-                  <p>⚠️ الطلاب الذين قاموا بالتسجيل مسبقاً يمكنهم دائماً التحقق من رغباتهم وتحميل وصل التسجيل الخاص بهم من خلال الانتقال إلى علامة التبويب <strong>"التحقق من التسجيل"</strong> في الأعلى.</p>
+                <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <p>⚠️ يمكنك دائماً التحقق من رغباتك المسجلة مسبقاً وتحميل وصل التسجيل الخاص بك من خلال علامة التبويب <strong className="text-indigo-600 dark:text-indigo-400 font-black">"التحقق من التسجيل"</strong> في الأعلى.</p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('verify')}
-                  className="mt-2 inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-600/15 hover:shadow-lg transition duration-150 cursor-pointer"
+                  className="mt-2 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-600/15 hover:shadow-lg transition duration-150 cursor-pointer"
                 >
                   <Search className="h-4 w-4" />
-                  <span>انتقل إلى التحقق من التسجيل / Aller à la vérification</span>
+                  <span>التحقق من الرغبات المسجلة مسبقاً / Vérifier mon inscription</span>
                 </button>
               </div>
             ) : (
               <>
+                {/* Registration Period & Live Countdown Banner */}
+                {portalSettings && (
+                  <div className="mb-6 bg-gradient-to-br from-indigo-50/70 to-slate-50 dark:from-slate-900/60 dark:to-slate-950/40 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 sm:p-5 shadow-sm text-right space-y-3.5" dir="rtl">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                          <Calendar className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-slate-850 dark:text-slate-200">الفترة الرسمية لتسجيل وتعديل الرغبات</h3>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Période officielle d'orientation et de modification</p>
+                        </div>
+                      </div>
+
+                      {timeLeft && timeLeft.totalMs > 0 && (
+                        <div className="flex items-center gap-1.5 self-end sm:self-auto bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-150 dark:border-emerald-900/20 animate-pulse">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>بقي على غلق البوابة: {timeLeft.days} يوم، {timeLeft.hours} ساعة، {timeLeft.minutes} دقيقة</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                      <div className="bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-slate-150 dark:border-slate-800/60 flex justify-between items-center">
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 block font-bold">تاريخ الافتتاح / Date d'ouverture</span>
+                          <span className="text-xs font-extrabold text-slate-700 dark:text-slate-300 block mt-0.5 leading-relaxed">
+                            {formatDateTime(portalSettings.startDate)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 px-2.5 py-0.5 rounded-full font-bold">مفتوح</span>
+                      </div>
+
+                      <div className="bg-white dark:bg-slate-900/80 p-3 rounded-xl border border-slate-150 dark:border-slate-800/60 flex justify-between items-center">
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 block font-bold">تاريخ الاختتام / Date de clôture</span>
+                          <span className="text-xs font-extrabold text-red-600 dark:text-red-400 block mt-0.5 leading-relaxed">
+                            {formatDateTime(portalSettings.endDate)}
+                          </span>
+                        </div>
+                        <span className="text-[10px] bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400 px-2.5 py-0.5 rounded-full font-bold font-sans">Fin de délai</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    {timeLeft && timeLeft.totalMs > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between items-center text-[9px] text-slate-400 dark:text-slate-500 font-bold">
+                          <span>نسبة الوقت المنقضي / Temps écoulé</span>
+                          <span>{Math.round(timeLeft.progress)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-1000"
+                            style={{ width: `${timeLeft.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Step Tracker Indicator */}
             <div className="mb-8 relative">
               <div className="flex justify-between items-center max-w-md mx-auto relative z-10">

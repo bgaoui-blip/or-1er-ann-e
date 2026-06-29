@@ -5,6 +5,95 @@ import { GraduationCap, Printer, CheckCircle, RefreshCw, Calendar, IdCard, User,
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+// OKLCH to RGB conversion helper for html2canvas compatibility with Tailwind CSS v4
+function oklchToRgb(lStr: string, cStr: string, hStr: string, aStr?: string): string {
+  try {
+    let L = lStr.endsWith('%') ? parseFloat(lStr) / 100 : parseFloat(lStr);
+    let C = cStr.endsWith('%') ? parseFloat(cStr) / 100 : parseFloat(cStr);
+    let H = parseFloat(hStr.replace(/[^\d.]/g, ''));
+    
+    if (isNaN(L) || isNaN(C) || isNaN(H)) {
+      return 'rgb(99, 102, 241)'; // Safe Indigo fallback
+    }
+
+    let A = 1;
+    if (aStr) {
+      const cleanA = aStr.trim();
+      A = cleanA.endsWith('%') ? parseFloat(cleanA) / 100 : parseFloat(cleanA);
+      if (isNaN(A)) A = 1;
+    }
+
+    // OKLCH to OKLab
+    const rad = (H * Math.PI) / 180;
+    const labA = C * Math.cos(rad);
+    const labB = C * Math.sin(rad);
+
+    // OKLab to LMS
+    const l_ = L + 0.3963377774 * labA + 0.2158037573 * labB;
+    const m_ = L - 0.1055613458 * labA - 0.0638541728 * labB;
+    const s_ = L - 0.0894841775 * labA - 1.2914855480 * labB;
+
+    // LMS to linear LMS^3
+    const l = l_ * l_ * l_;
+    const m = m_ * m_ * m_;
+    const s = s_ * s_ * s_;
+
+    // linear LMS to linear sRGB
+    let rLin = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+    let gLin = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+    let bLin = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+
+    // sRGB gamma correction
+    const gamma = (c: number) => {
+      if (c <= 0.0031308) {
+        return 12.92 * c;
+      }
+      return 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+    };
+
+    const r = Math.round(Math.max(0, Math.min(1, gamma(rLin))) * 255);
+    const g = Math.round(Math.max(0, Math.min(1, gamma(gLin))) * 255);
+    const b = Math.round(Math.max(0, Math.min(1, gamma(bLin))) * 255);
+
+    if (aStr !== undefined) {
+      return `rgba(${r}, ${g}, ${b}, ${A})`;
+    }
+    return `rgb(${r}, ${g}, ${b})`;
+  } catch (err) {
+    console.error('Error converting oklch to rgb:', err);
+    return 'rgb(99, 102, 241)';
+  }
+}
+
+// Scans CSS text and converts OKLCH declarations to standard RGB/RGBA format
+function replaceOklchInCss(cssText: string): string {
+  if (!cssText) return '';
+  // Highly permissive regex to match any oklch(...) call
+  const regex = /oklch\(([^)]+)\)/gi;
+  return cssText.replace(regex, (match, inner) => {
+    try {
+      // Replace slashes/commas with spaces and split by any sequence of whitespace
+      const parts = inner.trim().replace(/[\/,]/g, ' ').split(/\s+/);
+      if (parts.length >= 3) {
+        const l = parts[0];
+        const c = parts[1];
+        const h = parts[2];
+        const a = parts[3]; // might be undefined
+
+        // If it includes variable definitions, we fallback gracefully
+        if (l.includes('var') || c.includes('var') || h.includes('var')) {
+          return 'rgb(99, 102, 241)'; // indigo-500 fallback
+        }
+
+        return oklchToRgb(l, c, h, a);
+      }
+    } catch (e) {
+      console.error('Failed parsing oklch inner parts:', match, e);
+    }
+    return 'rgb(99, 102, 241)'; // Fallback color
+  });
+}
+
 interface RegistrationReceiptProps {
   registration: StudentRegistration;
   onReset: () => void;
@@ -27,16 +116,81 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         return;
       }
 
-      // Hide or show items if needed, configure canvas
+      // 1. Gather CSS texts from all stylesheets in the document to sanitize OKLCH values
+      const cssTexts: string[] = [];
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          if (sheet.ownerNode instanceof HTMLStyleElement) {
+            cssTexts.push(sheet.ownerNode.textContent || '');
+          } else if (sheet.href) {
+            // Check rules if same-origin, otherwise fallback to fetch
+            try {
+              const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+              cssTexts.push(rules);
+            } catch {
+              const response = await fetch(sheet.href);
+              const text = await response.text();
+              cssTexts.push(text);
+            }
+          }
+        } catch (e) {
+          console.warn('Could not read styleSheet rules, skipping:', e);
+        }
+      }
+
+      // 2. Sanitize all stylesheet texts by replacing OKLCH color definitions with standard RGB color format
+      const sanitizedCss = cssTexts.map(css => replaceOklchInCss(css)).join('\n');
+
+      // Temporarily toggle dark mode to capture a clean high-contrast white document
       const isDark = document.documentElement.classList.contains('dark');
-      
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // A small delay for the browser layout engine to paint light styles
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
       const canvas = await html2canvas(element, {
-        scale: 2, // High-quality display resolution
+        scale: 2.5, // Crisp, high-resolution rendering
         useCORS: true,
         allowTaint: true,
-        backgroundColor: isDark ? '#0f172a' : '#ffffff', // slate-900 or white background
+        backgroundColor: '#ffffff', // Clean white paper background
         logging: false,
+        onclone: (clonedDoc) => {
+          // Replace oklch in inline styles of all cloned elements
+          clonedDoc.querySelectorAll('[style]').forEach(el => {
+            const styleAttr = el.getAttribute('style');
+            if (styleAttr && styleAttr.toLowerCase().includes('oklch')) {
+              el.setAttribute('style', replaceOklchInCss(styleAttr));
+            }
+          });
+
+          // Replace oklch in presentation attributes (fill/stroke) of SVG or other elements
+          clonedDoc.querySelectorAll('[fill], [stroke]').forEach(el => {
+            const fill = el.getAttribute('fill');
+            if (fill && fill.toLowerCase().includes('oklch')) {
+              el.setAttribute('fill', replaceOklchInCss(fill));
+            }
+            const stroke = el.getAttribute('stroke');
+            if (stroke && stroke.toLowerCase().includes('oklch')) {
+              el.setAttribute('stroke', replaceOklchInCss(stroke));
+            }
+          });
+
+          // Remove all original stylesheets from the cloned document to avoid parsing errors
+          clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(el => el.remove());
+          
+          // Inject our single consolidated, OKLCH-safe style sheet
+          const safeStyle = clonedDoc.createElement('style');
+          safeStyle.textContent = sanitizedCss;
+          clonedDoc.head.appendChild(safeStyle);
+        }
       });
+
+      // Restore dark mode immediately after capturing
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      }
 
       const imgData = canvas.toDataURL('image/png');
       
@@ -44,21 +198,27 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      
+      // Printable boundaries (10mm margin on all sides)
+      const marginX = 10;
+      const marginY = 10;
+      const printableWidth = imgWidth - (marginX * 2);
+      const printableHeight = (canvas.height * printableWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Smart single-page scaling
+      if (printableHeight > (pageHeight - (marginY * 2))) {
+        const scaleFactor = (pageHeight - (marginY * 2)) / printableHeight;
+        const finalWidth = printableWidth * scaleFactor;
+        const finalHeight = printableHeight * scaleFactor;
+        const offsetLeft = (imgWidth - finalWidth) / 2;
+        const offsetTop = (pageHeight - finalHeight) / 2;
+        pdf.addImage(imgData, 'PNG', offsetLeft, offsetTop, finalWidth, finalHeight);
+      } else {
+        const offsetTop = (pageHeight - printableHeight) / 2;
+        pdf.addImage(imgData, 'PNG', marginX, offsetTop, printableWidth, printableHeight);
       }
 
-      const fileName = `وصل_تسجيل_رغبة_التوجيه_${registration.studentCardNumber}.pdf`;
+      const fileName = `وصل_توجيه_طالب_${registration.studentCardNumber}.pdf`;
       pdf.save(fileName);
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -86,7 +246,54 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6">
-      <div className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl border border-emerald-100 dark:border-emerald-950 overflow-hidden print:shadow-none print:border-none">
+      {/* Dynamic media style overrides to isolate the receipt and remove page margins when printing natively */}
+      <style>{`
+        @media print {
+          html, body {
+            background: white !important;
+            color: black !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Hide all surrounding elements */
+          body > *, #root > * {
+            display: none !important;
+          }
+          /* Show only the receipt card */
+          #root {
+            display: block !important;
+          }
+          #root > div, #root .print\\:hidden {
+            display: none !important;
+          }
+          /* Mount print area container at absolute top-left with no margins */
+          #receipt-print-card-wrapper {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          #receipt-print-area {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            color: #0f172a !important;
+          }
+          /* Light mode forces on print */
+          .bg-slate-50 { background-color: #f8fafc !important; }
+          .text-slate-800 { color: #1e293b !important; }
+          .text-slate-700 { color: #334155 !important; }
+          .text-slate-400 { color: #94a3b8 !important; }
+          .border { border-color: #e2e8f0 !important; }
+        }
+      `}</style>
+
+      <div id="receipt-print-card-wrapper" className="bg-white dark:bg-slate-900 shadow-xl rounded-2xl border border-emerald-100 dark:border-emerald-950 overflow-hidden print:shadow-none print:border-none">
         
         {/* Success Banner (Hidden during print) */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-8 text-white text-center print:hidden">

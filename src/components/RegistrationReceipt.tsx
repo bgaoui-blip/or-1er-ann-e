@@ -111,11 +111,6 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
     setIsGeneratingPDF(true);
     const isDark = document.documentElement.classList.contains('dark');
     
-    // Keep track of the original state of styles & links to restore them later
-    const originalStyles: { element: HTMLStyleElement; text: string }[] = [];
-    const originalLinks: { element: HTMLLinkElement; disabled: boolean }[] = [];
-    let tempStyleTag: HTMLStyleElement | null = null;
-
     try {
       const element = document.getElementById('receipt-print-area');
       if (!element) {
@@ -131,57 +126,48 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
       // A small delay for the browser layout engine to paint light styles and compute styles
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Sanitize existing <style> elements in place
+      // 1. Gather and sanitize CSS from all <style> tags in the original document
+      let allSanitizedCss = '';
       document.querySelectorAll('style').forEach((el) => {
-        const htmlStyle = el as HTMLStyleElement;
-        originalStyles.push({ element: htmlStyle, text: htmlStyle.textContent || '' });
-        if (htmlStyle.textContent && htmlStyle.textContent.toLowerCase().includes('oklch')) {
-          htmlStyle.textContent = replaceOklchInCss(htmlStyle.textContent);
+        const text = el.textContent || '';
+        if (text) {
+          if (text.toLowerCase().includes('oklch')) {
+            allSanitizedCss += replaceOklchInCss(text) + '\n';
+          } else {
+            allSanitizedCss += text + '\n';
+          }
         }
       });
 
-      // Handle linked stylesheets (<link rel="stylesheet">)
-      let consolidatedCss = '';
+      // 2. Gather and sanitize CSS from all <link rel="stylesheet"> tags in the original document
       for (const sheet of Array.from(document.styleSheets)) {
         try {
           const owner = sheet.ownerNode;
           if (owner instanceof HTMLLinkElement) {
-            originalLinks.push({ element: owner, disabled: sheet.disabled });
-            
-            // Get CSS rules if accessible (same-origin), sanitize and consolidate
+            // Attempt to read from cssRules (for same-origin)
             try {
               const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
               if (rules.toLowerCase().includes('oklch')) {
-                consolidatedCss += replaceOklchInCss(rules) + '\n';
+                allSanitizedCss += replaceOklchInCss(rules) + '\n';
               } else {
-                consolidatedCss += rules + '\n';
+                allSanitizedCss += rules + '\n';
               }
             } catch (cssErr) {
-              // Fetch cross-origin or same-origin fallback
+              // Fallback: fetch the external stylesheet and sanitize its text
               if (owner.href) {
                 try {
                   const response = await fetch(owner.href);
                   const text = await response.text();
-                  consolidatedCss += replaceOklchInCss(text) + '\n';
+                  allSanitizedCss += replaceOklchInCss(text) + '\n';
                 } catch (fetchErr) {
                   console.warn('Could not fetch external stylesheet for sanitization:', owner.href, fetchErr);
                 }
               }
             }
-            // Disable the link element so html2canvas doesn't try to parse its unmodified source
-            sheet.disabled = true;
           }
         } catch (sheetErr) {
-          console.warn('Error reading or disabling stylesheet:', sheetErr);
+          console.warn('Error reading stylesheet:', sheetErr);
         }
-      }
-
-      // If we extracted CSS from link tags, insert it as a temporary sanitized style tag
-      if (consolidatedCss) {
-        tempStyleTag = document.createElement('style');
-        tempStyleTag.id = 'temp-sanitized-styles-pdf';
-        tempStyleTag.textContent = consolidatedCss;
-        document.head.appendChild(tempStyleTag);
       }
 
       const canvas = await html2canvas(element, {
@@ -191,6 +177,16 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         backgroundColor: '#ffffff', // Clean white paper background
         logging: false,
         onclone: (clonedDoc) => {
+          // Remove all style and link elements in the cloned document so html2canvas never loads or parses them
+          clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach((el) => {
+            el.remove();
+          });
+
+          // Inject our single consolidated, sanitized stylesheet containing no oklch
+          const styleTag = clonedDoc.createElement('style');
+          styleTag.textContent = allSanitizedCss;
+          clonedDoc.head.appendChild(styleTag);
+
           // Also convert any oklch color values in inline styles
           clonedDoc.querySelectorAll('[style]').forEach(el => {
             const htmlEl = el as HTMLElement;
@@ -246,36 +242,6 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
       console.error('PDF generation error:', err);
       alert('فشل إنشاء ملف PDF. يرجى استخدام ميزة الطباعة التقليدية أو المحاولة مرة أخرى.');
     } finally {
-      // Restore all original styles and link tags
-      originalStyles.forEach(({ element, text }) => {
-        try {
-          element.textContent = text;
-        } catch (e) {
-          console.error('Failed to restore style tag textContent:', e);
-        }
-      });
-
-      originalLinks.forEach(({ element, disabled }) => {
-        try {
-          const sheet = element.sheet;
-          if (sheet) {
-            sheet.disabled = disabled;
-          } else {
-            element.disabled = disabled;
-          }
-        } catch (e) {
-          console.error('Failed to restore link element state:', e);
-        }
-      });
-
-      if (tempStyleTag && tempStyleTag.parentNode) {
-        try {
-          tempStyleTag.remove();
-        } catch (e) {
-          console.error('Failed to remove temp style tag:', e);
-        }
-      }
-
       // Restore dark mode if it was previously active
       if (isDark) {
         document.documentElement.classList.add('dark');

@@ -66,32 +66,72 @@ function oklchToRgb(lStr: string, cStr: string, hStr: string, aStr?: string): st
 }
 
 // Scans CSS text and converts OKLCH declarations to standard RGB/RGBA format
-function replaceOklchInCss(cssText: string): string {
-  if (!cssText) return '';
-  // Highly permissive regex to match any oklch(...) call
-  const regex = /oklch\(([^)]+)\)/gi;
-  return cssText.replace(regex, (match, inner) => {
-    try {
-      // Replace slashes/commas with spaces and split by any sequence of whitespace
-      const parts = inner.trim().replace(/[\/,]/g, ' ').split(/\s+/);
-      if (parts.length >= 3) {
-        const l = parts[0];
-        const c = parts[1];
-        const h = parts[2];
-        const a = parts[3]; // might be undefined
+function replaceOklchInCss(css: string): string {
+  if (!css) return '';
+  let result = '';
+  let i = 0;
+  const len = css.length;
 
-        // If it includes variable definitions, we fallback gracefully
-        if (l.includes('var') || c.includes('var') || h.includes('var')) {
-          return 'rgb(99, 102, 241)'; // indigo-500 fallback
+  while (i < len) {
+    if (css.substring(i, i + 6).toLowerCase() === 'oklch(') {
+      // Find the matching closing parenthesis, accounting for nested parentheses (e.g., var())
+      const start = i;
+      let parenCount = 1;
+      i += 6;
+      let inner = '';
+      
+      while (i < len && parenCount > 0) {
+        const char = css[i];
+        if (char === '(') {
+          parenCount++;
+        } else if (char === ')') {
+          parenCount--;
         }
-
-        return oklchToRgb(l, c, h, a);
+        if (parenCount > 0) {
+          inner += char;
+          i++;
+        }
       }
-    } catch (e) {
-      console.error('Failed parsing oklch inner parts:', match, e);
+      
+      if (parenCount === 0) {
+        // We found the full oklch(...) block
+        i++; // skip the closing ')'
+        
+        // Parse inner contents
+        try {
+          // Replace commas and slashes with spaces
+          const cleanInner = inner.trim().replace(/[\/,]/g, ' ');
+          const parts = cleanInner.split(/\s+/).filter(Boolean);
+          
+          if (parts.length >= 3) {
+            const l = parts[0];
+            const c = parts[1];
+            const h = parts[2];
+            const a = parts[3]; // optional alpha
+            
+            if (l.includes('var') || c.includes('var') || h.includes('var')) {
+              // Graceful fallback for variables
+              result += 'rgb(99, 102, 241)';
+            } else {
+              const rgb = oklchToRgb(l, c, h, a);
+              result += rgb;
+            }
+          } else {
+            result += 'rgb(99, 102, 241)';
+          }
+        } catch (err) {
+          result += 'rgb(99, 102, 241)';
+        }
+      } else {
+        // No matching paren, just append what we have
+        result += css.substring(start, i);
+      }
+    } else {
+      result += css[i];
+      i++;
     }
-    return 'rgb(99, 102, 241)'; // Fallback color
-  });
+  }
+  return result;
 }
 
 interface RegistrationReceiptProps {
@@ -299,42 +339,70 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         }
 
         @media print {
+          /* Force standard document scroll and dimensions */
           html, body {
             background: white !important;
             color: black !important;
             height: auto !important;
+            min-height: auto !important;
             overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          /* Hide all surrounding elements */
-          body > *, #root > * {
-            display: none !important;
-          }
-          /* Show only the receipt card */
-          #root {
+          
+          /* Un-restrict layout parent containers so they expand fully */
+          #root, 
+          #root > div, 
+          .flex.h-screen.w-screen,
+          .overflow-y-auto,
+          .flex-1 {
             display: block !important;
-          }
-          #root > div, #root .print\\:hidden {
-            display: none !important;
-          }
-          /* Mount print area container at absolute top-left with no margins */
-          #receipt-print-card-wrapper {
-            display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+            position: relative !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            box-shadow: none !important;
             border: none !important;
+            box-shadow: none !important;
           }
+
+          /* Hide all components marked as print:hidden */
+          .print\\:hidden {
+            display: none !important;
+          }
+
+          /* Specifically target other elements to hide, such as aside and header */
+          aside, header, footer {
+            display: none !important;
+          }
+
+          /* Reset padding and margin of print wrapper to look pristine on paper */
+          #receipt-print-card-wrapper {
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+
           #receipt-print-area {
             padding: 0 !important;
             margin: 0 !important;
             background: white !important;
             color: #0f172a !important;
+            width: 100% !important;
           }
-          /* Light mode forces on print */
+
+          /* Ensure all dark-mode classes are bypassed and print light mode */
+          .dark {
+            background-color: white !important;
+            color: black !important;
+          }
+          
           .bg-slate-50 { background-color: #f8fafc !important; }
           .text-slate-800 { color: #1e293b !important; }
           .text-slate-700 { color: #334155 !important; }

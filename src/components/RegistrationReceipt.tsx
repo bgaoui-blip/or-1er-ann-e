@@ -109,6 +109,13 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true);
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Keep track of the original state of styles & links to restore them later
+    const originalStyles: { element: HTMLStyleElement; text: string }[] = [];
+    const originalLinks: { element: HTMLLinkElement; disabled: boolean }[] = [];
+    let tempStyleTag: HTMLStyleElement | null = null;
+
     try {
       const element = document.getElementById('receipt-print-area');
       if (!element) {
@@ -117,13 +124,65 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
       }
 
       // Temporarily toggle dark mode to capture a clean high-contrast white document
-      const isDark = document.documentElement.classList.contains('dark');
       if (isDark) {
         document.documentElement.classList.remove('dark');
       }
 
       // A small delay for the browser layout engine to paint light styles and compute styles
       await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Sanitize existing <style> elements in place
+      document.querySelectorAll('style').forEach((el) => {
+        const htmlStyle = el as HTMLStyleElement;
+        originalStyles.push({ element: htmlStyle, text: htmlStyle.textContent || '' });
+        if (htmlStyle.textContent && htmlStyle.textContent.toLowerCase().includes('oklch')) {
+          htmlStyle.textContent = replaceOklchInCss(htmlStyle.textContent);
+        }
+      });
+
+      // Handle linked stylesheets (<link rel="stylesheet">)
+      let consolidatedCss = '';
+      for (const sheet of Array.from(document.styleSheets)) {
+        try {
+          const owner = sheet.ownerNode;
+          if (owner instanceof HTMLLinkElement) {
+            originalLinks.push({ element: owner, disabled: sheet.disabled });
+            
+            // Get CSS rules if accessible (same-origin), sanitize and consolidate
+            try {
+              const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+              if (rules.toLowerCase().includes('oklch')) {
+                consolidatedCss += replaceOklchInCss(rules) + '\n';
+              } else {
+                consolidatedCss += rules + '\n';
+              }
+            } catch (cssErr) {
+              // Fetch cross-origin or same-origin fallback
+              if (owner.href) {
+                try {
+                  const response = await fetch(owner.href);
+                  const text = await response.text();
+                  consolidatedCss += replaceOklchInCss(text) + '\n';
+                } catch (fetchErr) {
+                  console.warn('Could not fetch external stylesheet for sanitization:', owner.href, fetchErr);
+                }
+              }
+            }
+            // Disable the link element so html2canvas doesn't try to parse its unmodified source
+            sheet.disabled = true;
+          }
+        } catch (sheetErr) {
+          console.warn('Error reading or disabling stylesheet:', sheetErr);
+        }
+      }
+
+      // If we extracted CSS from link tags, insert it as a temporary sanitized style tag
+      if (consolidatedCss) {
+        tempStyleTag = document.createElement('style');
+        tempStyleTag.id = 'temp-sanitized-styles-pdf';
+        tempStyleTag.textContent = consolidatedCss;
+        document.head.appendChild(tempStyleTag);
+      }
 
       const canvas = await html2canvas(element, {
         scale: 2.5, // Crisp, high-resolution rendering
@@ -132,48 +191,28 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         backgroundColor: '#ffffff', // Clean white paper background
         logging: false,
         onclone: (clonedDoc) => {
-          const originalEl = document.getElementById('receipt-print-area');
-          const clonedEl = clonedDoc.getElementById('receipt-print-area');
-          if (!originalEl || !clonedEl) return;
-
-          // Helper to copy computed styles from original element to cloned element
-          const copyStyles = (orig: HTMLElement, clon: HTMLElement) => {
-            const computed = window.getComputedStyle(orig);
-            const props = [
-              'backgroundColor', 'color', 'fontFamily', 'fontSize', 'fontWeight',
-              'borderColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
-              'borderStyle', 'borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth',
-              'borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomLeftRadius', 'borderBottomRightRadius',
-              'padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
-              'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight',
-              'display', 'flexDirection', 'alignItems', 'justifyContent', 'gap',
-              'width', 'height', 'boxShadow', 'textAlign', 'direction', 'lineHeight',
-              'fill', 'stroke', 'strokeWidth'
-            ];
-            for (const prop of props) {
-              const val = computed[prop as any];
-              if (val) {
-                clon.style[prop as any] = val;
-              }
+          // Also convert any oklch color values in inline styles
+          clonedDoc.querySelectorAll('[style]').forEach(el => {
+            const htmlEl = el as HTMLElement;
+            const styleAttr = htmlEl.getAttribute('style');
+            if (styleAttr && styleAttr.toLowerCase().includes('oklch')) {
+              htmlEl.setAttribute('style', replaceOklchInCss(styleAttr));
             }
-          };
+          });
 
-          // Recursively copy styles for the root container and all descendants
-          copyStyles(originalEl, clonedEl);
-          const origKids = originalEl.querySelectorAll('*');
-          const clonKids = clonedEl.querySelectorAll('*');
-          for (let i = 0; i < origKids.length; i++) {
-            if (clonKids[i]) {
-              copyStyles(origKids[i] as HTMLElement, clonKids[i] as HTMLElement);
+          // Convert oklch color values in fill or stroke attributes
+          clonedDoc.querySelectorAll('[fill], [stroke]').forEach(el => {
+            const fill = el.getAttribute('fill');
+            if (fill && fill.toLowerCase().includes('oklch')) {
+              el.setAttribute('fill', replaceOklchInCss(fill));
             }
-          }
+            const stroke = el.getAttribute('stroke');
+            if (stroke && stroke.toLowerCase().includes('oklch')) {
+              el.setAttribute('stroke', replaceOklchInCss(stroke));
+            }
+          });
         }
       });
-
-      // Restore dark mode immediately after capturing
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      }
 
       const imgData = canvas.toDataURL('image/png');
       
@@ -207,6 +246,41 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
       console.error('PDF generation error:', err);
       alert('فشل إنشاء ملف PDF. يرجى استخدام ميزة الطباعة التقليدية أو المحاولة مرة أخرى.');
     } finally {
+      // Restore all original styles and link tags
+      originalStyles.forEach(({ element, text }) => {
+        try {
+          element.textContent = text;
+        } catch (e) {
+          console.error('Failed to restore style tag textContent:', e);
+        }
+      });
+
+      originalLinks.forEach(({ element, disabled }) => {
+        try {
+          const sheet = element.sheet;
+          if (sheet) {
+            sheet.disabled = disabled;
+          } else {
+            element.disabled = disabled;
+          }
+        } catch (e) {
+          console.error('Failed to restore link element state:', e);
+        }
+      });
+
+      if (tempStyleTag && tempStyleTag.parentNode) {
+        try {
+          tempStyleTag.remove();
+        } catch (e) {
+          console.error('Failed to remove temp style tag:', e);
+        }
+      }
+
+      // Restore dark mode if it was previously active
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      }
+
       setIsGeneratingPDF(false);
     }
   };
@@ -231,6 +305,33 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
     <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6">
       {/* Dynamic media style overrides to isolate the receipt and remove page margins when printing natively */}
       <style>{`
+        #receipt-print-area {
+          --color-indigo-50: #e0e7ff !important;
+          --color-indigo-100: #c7d2fe !important;
+          --color-indigo-500: #6366f1 !important;
+          --color-indigo-600: #4f46e5 !important;
+          --color-indigo-700: #4338ca !important;
+          --color-indigo-950: #1e1b4b !important;
+          
+          --color-emerald-50: #ecfdf5 !important;
+          --color-emerald-100: #d1fae5 !important;
+          --color-emerald-600: #059669 !important;
+          --color-emerald-700: #047857 !important;
+          --color-emerald-950: #022c22 !important;
+          
+          --color-slate-50: #f8fafc !important;
+          --color-slate-100: #f1f5f9 !important;
+          --color-slate-200: #e2e8f0 !important;
+          --color-slate-300: #cbd5e1 !important;
+          --color-slate-400: #94a3b8 !important;
+          --color-slate-500: #64748b !important;
+          --color-slate-600: #475569 !important;
+          --color-slate-700: #334155 !important;
+          --color-slate-800: #1e293b !important;
+          --color-slate-900: #0f172a !important;
+          --color-slate-950: #020617 !important;
+        }
+
         @media print {
           html, body {
             background: white !important;

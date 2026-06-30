@@ -22,7 +22,7 @@ export default function RegistrationForm({
   const [step, setStep] = useState<1 | 2>(1);
   
   // Navigation Tab State
-  const [activeTab, setActiveTab] = useState<'register' | 'verify'>('register');
+  const [activeTab, setActiveTab] = useState<'register' | 'verify'>(isPortalOpen ? 'register' : 'verify');
   
   // Verification states
   const [searchCardNumber, setSearchCardNumber] = useState('');
@@ -366,24 +366,30 @@ export default function RegistrationForm({
                 <span>العودة للقائمة الرئيسية / Retour</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setFirstName(duplicateStudent.firstName);
-                  setLastName(duplicateStudent.lastName);
-                  setDateOfBirth(duplicateStudent.dateOfBirth);
-                  setFirstYearSpecialty(duplicateStudent.firstYearSpecialty);
-                  setRankedGroups(duplicateStudent.rankedGroups);
-                  
-                  setHasConfirmedDuplicateAction(true);
-                  setDuplicateStudent(null);
-                  setStep(2);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
-              >
-                <Check className="h-4 w-4" />
-                <span>متابعة تغيير الرغبات / Modifier les vœux</span>
-              </button>
+              {isPortalOpen ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFirstName(duplicateStudent.firstName);
+                    setLastName(duplicateStudent.lastName);
+                    setDateOfBirth(duplicateStudent.dateOfBirth);
+                    setFirstYearSpecialty(duplicateStudent.firstYearSpecialty);
+                    setRankedGroups(duplicateStudent.rankedGroups);
+                    
+                    setHasConfirmedDuplicateAction(true);
+                    setDuplicateStudent(null);
+                    setStep(2);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
+                >
+                  <Check className="h-4 w-4" />
+                  <span>متابعة تغيير الرغبات / Modifier les vœux</span>
+                </button>
+              ) : (
+                <div className="flex-1 p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200/40 rounded-xl text-xs font-bold leading-relaxed text-center">
+                  لقد انتهت فترة الاختيار والموقع مغلق حالياً. لا يمكن تعديل الرغبات.
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -408,8 +414,15 @@ export default function RegistrationForm({
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
-          <GraduationCap className="h-4 w-4" />
+          {isPortalOpen ? (
+            <GraduationCap className="h-4 w-4 text-indigo-500" />
+          ) : (
+            <Lock className="h-3.5 w-3.5 text-red-500" />
+          )}
           <span>تسجيل رغبات جديد / S'inscrire</span>
+          {!isPortalOpen && (
+            <span className="text-[9px] bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-black">مغلق</span>
+          )}
         </button>
         <button
           type="button"
@@ -664,7 +677,7 @@ export default function RegistrationForm({
                 </div>
                 
                 <div className="space-y-3">
-                  <h2 className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">لقد انتهت فترة الاختيار. الموقع مغلق.</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">الموقع مغلق لقد انتهى تاريخ ملئ الرغبات</h2>
                   <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-bold">للاستفسار اتصل بإدارة القسم</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">La période de sélection est terminée. Le site est fermé. Pour toute information, veuillez contacter l'administration du département.</p>
                 </div>

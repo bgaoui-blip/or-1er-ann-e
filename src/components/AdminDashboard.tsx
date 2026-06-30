@@ -9,6 +9,7 @@ interface AdminDashboardProps {
   onDeleteRegistration: (id: string) => void;
   onClearAll: () => void;
   onResetToMockData: () => void;
+  onDeleteMockData: () => void;
   onImportRegistrations: (imported: StudentRegistration[]) => void;
   portalSettings: PortalSettings;
   onUpdatePortalSettings: (settings: PortalSettings) => Promise<void>;
@@ -19,6 +20,7 @@ export default function AdminDashboard({
   onDeleteRegistration,
   onClearAll,
   onResetToMockData,
+  onDeleteMockData,
   onImportRegistrations,
   portalSettings,
   onUpdatePortalSettings
@@ -412,16 +414,26 @@ export default function AdminDashboard({
             <>
               <button
                 onClick={onResetToMockData}
-                className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-semibold"
+                className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-semibold cursor-pointer"
+                title="إعادة شحن الطلاب التجريبيين الافتراضيين الستة"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                <span>إعادة تحميل البيانات التجريبية</span>
+                <span>شحن البيانات التجريبية</span>
+              </button>
+              
+              <button
+                onClick={onDeleteMockData}
+                className="flex items-center gap-1.5 px-3.5 py-2 border border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-950/20 text-amber-700 dark:text-amber-400 rounded-xl transition duration-150 text-xs font-semibold cursor-pointer"
+                title="حذف جميع الطلاب التجريبيين الستة والاحتفاظ بالطلاب الحقيقيين"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-amber-500" />
+                <span>حذف المعلومات التجريبية</span>
               </button>
               
               <button
                 onClick={onClearAll}
                 disabled={totalCount === 0}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition duration-150 cursor-pointer ${
                   totalCount > 0 
                     ? 'border border-red-200 hover:bg-red-50 text-red-600 dark:border-red-900/50 dark:hover:bg-red-950/20' 
                     : 'border border-slate-100 text-slate-300 dark:border-slate-800 dark:text-slate-700 cursor-not-allowed'

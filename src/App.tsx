@@ -336,6 +336,34 @@ export default function App() {
     }
   };
 
+  // Delete mock data only in Firestore - Restricted to b.gaoui@lagh-univ.dz
+  const handleDeleteMockData = async () => {
+    const loggedInAdminEmail = sessionStorage.getItem('jst_admin_email') || '';
+    if (loggedInAdminEmail.toLowerCase().trim() !== 'b.gaoui@lagh-univ.dz') {
+      alert('خطأ: أنت لا تملك صلاحية حذف البيانات التجريبية! / Action réservée à M. B. Gaoui !');
+      return;
+    }
+
+    const mockIds = MOCK_REGISTRATIONS.map(item => item.id);
+    const mockToClean = registrations.filter(r => mockIds.includes(r.id) || r.id.startsWith('reg_'));
+
+    if (mockToClean.length === 0) {
+      alert('لا توجد بيانات تجريبية حالية لحذفها! / Aucune donnée de démonstration à supprimer.');
+      return;
+    }
+
+    if (window.confirm(`هل تريد بالتأكيد حذف جميع البيانات التجريبية (${mockToClean.length} تسجيل تجريبي) مع الاحتفاظ بتسجيلات الطلاب الحقيقية؟`)) {
+      try {
+        const deletePromises = mockToClean.map(r => deleteDoc(doc(db, 'registrations', r.id)));
+        await Promise.all(deletePromises);
+        alert(`تم حذف ${mockToClean.length} تسجيل تجريبي بنجاح! / ${mockToClean.length} inscriptions de démonstration supprimées avec succès !`);
+      } catch (error) {
+        console.error("Error deleting mock data in Firestore:", error);
+        alert("حدث خطأ أثناء حذف البيانات التجريبية.");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row font-sans">
       
@@ -526,6 +554,19 @@ export default function App() {
         {/* Dynamic Views Mounting Area */}
         <div className="flex-1 p-4 lg:p-8">
           
+          {!isPortalOpen() && currentView !== 'admin' && (
+            <div className="mb-6 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4 flex items-start gap-3 text-right" dir="rtl">
+              <div className="p-2 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-xl mt-0.5 shrink-0 animate-pulse">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-red-800 dark:text-red-400">تنبيه هام: الموقع مغلق لقد انتهى تاريخ ملئ الرغبات</h4>
+                <p className="text-xs text-red-700 dark:text-red-300 font-bold leading-relaxed">لا يمكن للطلبة تسجيل أو تعديل الرغبات حالياً بسبب انتهاء الفترة الرسمية للتسجيل. خانات المعلومات مغلقة تماماً. للاستفسار اتصل بإدارة القسم.</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Attention: La période de sélection est terminée. Le site est fermé. L'enregistrement et la modification de vos vœux ne sont plus disponibles. Veuillez contacter l'administration pour plus d'infos.</p>
+              </div>
+            </div>
+          )}
+
           {currentView === 'student-form' && (
             <RegistrationForm 
               onRegisterComplete={handleRegisterComplete} 
@@ -556,6 +597,7 @@ export default function App() {
                 onDeleteRegistration={handleDeleteRegistration}
                 onClearAll={handleClearAll}
                 onResetToMockData={handleResetToMockData}
+                onDeleteMockData={handleDeleteMockData}
                 onImportRegistrations={handleImportRegistrations}
                 portalSettings={portalSettings}
                 onUpdatePortalSettings={handleUpdatePortalSettings}

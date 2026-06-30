@@ -344,7 +344,7 @@ export default function RegistrationForm({
                 </div>
                 <div className="sm:col-span-2 border-t border-slate-100 dark:border-slate-800 pt-2.5 mt-1">
                   <span className="text-slate-400 block font-semibold">تاريخ التسجيل الإلكتروني:</span>
-                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     {formatDateTime(duplicateStudent.registrationDate)}
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export default function RegistrationForm({
                     setDuplicateStudent(null);
                     setStep(2);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
                 >
                   <Check className="h-4 w-4" />
                   <span>متابعة تغيير الرغبات / Modifier les vœux</span>
@@ -410,12 +410,12 @@ export default function RegistrationForm({
           }}
           className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'register'
-              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md border border-slate-150 dark:border-slate-800'
+              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-md border border-slate-150 dark:border-slate-800'
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           {isPortalOpen ? (
-            <GraduationCap className="h-4 w-4 text-indigo-500" />
+            <GraduationCap className="h-4 w-4 text-emerald-500" />
           ) : (
             <Lock className="h-3.5 w-3.5 text-red-500" />
           )}
@@ -435,7 +435,7 @@ export default function RegistrationForm({
           }}
           className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'verify'
-              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md border border-slate-150 dark:border-slate-800'
+              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-md border border-slate-150 dark:border-slate-800'
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
@@ -456,13 +456,13 @@ export default function RegistrationForm({
           >
             {/* Main verification card */}
             <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-              {/* Card Header Banner */}
-              <div className="bg-gradient-to-r from-indigo-800 to-indigo-950 px-6 py-5 text-white flex justify-between items-center">
+              {/* Card Header Banner with pristine emerald gradients */}
+              <div className="bg-gradient-to-r from-emerald-800 to-teal-950 px-6 py-5 text-white flex justify-between items-center">
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold font-sans tracking-tight">التحقق من التسجيل وتفاصيل التوجيه</h2>
-                  <p className="text-xs text-indigo-200 mt-1">Vérification de l'inscription et détails d'orientation</p>
+                  <h2 className="text-base sm:text-lg font-extrabold font-sans tracking-tight">التحقق من التسجيل وتفاصيل التوجيه</h2>
+                  <p className="text-xs text-teal-200 mt-1 font-medium">Vérification de l'inscription et détails d'orientation</p>
                 </div>
-                <ShieldCheck className="h-8 w-8 text-indigo-300 shrink-0" />
+                <ShieldCheck className="h-8 w-8 text-teal-300 shrink-0 animate-pulse" />
               </div>
 
               {/* Verification Form Body */}
@@ -483,7 +483,7 @@ export default function RegistrationForm({
                         placeholder="مثال: 181839012345 أو 232339567890"
                         value={searchCardNumber}
                         onChange={(e) => setSearchCardNumber(e.target.value)}
-                        className="w-full pr-10 pl-3 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150 text-right"
+                        className="w-full pr-10 pl-3 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150 text-right"
                       />
                       <div className="absolute inset-y-0 pr-3 right-0 flex items-center pointer-events-none text-slate-400">
                         <IdCard className="h-4 w-4" />
@@ -492,7 +492,7 @@ export default function RegistrationForm({
                     
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 cursor-pointer shrink-0"
                     >
                       <Search className="h-4 w-4" />
                       <span>بحث وتحقق / Rechercher</span>
@@ -565,9 +565,9 @@ export default function RegistrationForm({
                                   {verifiedStudent.rankedGroups.map((groupId, index) => {
                                     const grp = GROUPS_DATA.find(g => g.id === groupId);
                                     return (
-                                      <div key={groupId} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl text-center flex-1">
+                                      <div key={groupId} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg text-center flex-1">
                                         <span className="block text-[9px] font-bold text-slate-400">الرغبة {index + 1}</span>
-                                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold mt-1.5 ${grp?.badgeBg}`}>
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold mt-1 ${grp?.badgeBg}`}>
                                           {grp?.name}
                                         </span>
                                       </div>
@@ -578,7 +578,7 @@ export default function RegistrationForm({
                               <div className="sm:col-span-2 border-t border-slate-200 dark:border-slate-800 pt-3 mt-1 flex justify-between items-center">
                                 <div>
                                   <span className="text-slate-400 block font-semibold">تاريخ التسجيل الإلكتروني:</span>
-                                  <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-[11px]">
+                                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">
                                     {formatDateTime(verifiedStudent.registrationDate)}
                                   </span>
                                 </div>
@@ -618,7 +618,7 @@ export default function RegistrationForm({
                             <button
                               type="button"
                               onClick={() => onViewReceipt(verifiedStudent)}
-                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
+                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
                             >
                               <Printer className="h-4 w-4" />
                               <span>عرض وتحميل الوصل / Voir le reçu</span>
@@ -645,7 +645,7 @@ export default function RegistrationForm({
                                 setActiveTab('register');
                                 setStep(1);
                               }}
-                              className="mt-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer transition duration-150"
+                              className="mt-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer transition duration-150 shadow-md shadow-emerald-600/15"
                             >
                               سجل رغباتك الآن / S'inscrire maintenant
                             </button>
@@ -656,7 +656,7 @@ export default function RegistrationForm({
                           )}
                         </div>
                       )}
-                    </motion.div>
+                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>

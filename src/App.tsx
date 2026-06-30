@@ -367,8 +367,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row font-sans">
       
-      {/* Sleek Interface Sidebar */}
-      <aside className="w-full lg:w-80 bg-indigo-950 text-white flex flex-col p-6 lg:p-8 shadow-2xl shrink-0 border-b lg:border-b-0 lg:border-r border-indigo-900/40 print:hidden justify-between">
+      {/* Sleek Interface Sidebar with prestigious deep Emerald background */}
+      <aside className="w-full lg:w-80 bg-[#063025] text-white flex flex-col p-6 lg:p-8 shadow-2xl shrink-0 border-b lg:border-b-0 lg:border-r border-emerald-900/40 print:hidden justify-between">
         <div className="space-y-8 lg:space-y-10">
           
           {/* Brand logo & header - Click 5 times to trigger secret admin login */}
@@ -377,12 +377,12 @@ export default function App() {
             onClick={handleLogoClick}
             title="انقر 5 مرات للدخول السري للمشرف / Cliquez 5 fois pour accès admin"
           >
-            <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center mb-0 lg:mb-4 shrink-0 shadow-lg shadow-indigo-950/55 border border-white/10 group-hover:bg-white/20 transition-colors">
-              <GraduationCap className="h-7 w-7 text-white" />
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-0 lg:mb-4 shrink-0 shadow-lg border border-white/10 group-hover:bg-white/20 transition-all duration-300 transform group-hover:scale-105">
+              <GraduationCap className="h-7 w-7 text-emerald-300 group-hover:text-white" />
             </div>
             <div>
-              <h1 className="text-sm lg:text-base font-black tracking-tight font-sans">جامعة عمار ثليجي بالأغواط</h1>
-              <p className="text-indigo-300 text-[10px] uppercase tracking-widest mt-0.5">فرع المهندسين ST-ING</p>
+              <h1 className="text-sm lg:text-base font-extrabold tracking-tight font-sans">جامعة عمار ثليجي بالأغواط</h1>
+              <p className="text-teal-300/80 text-[10px] uppercase tracking-widest mt-0.5 font-bold">فرع المهندسين ST-ING</p>
             </div>
           </div>
 
@@ -400,9 +400,9 @@ export default function App() {
                 currentView === 'student-form' ? 'text-white' : 'text-white/40 hover:text-white/70'
               }`}
             >
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                 currentView === 'student-form' 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/50 scale-105' 
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 scale-110 ring-2 ring-emerald-300/20' 
                   : 'border border-white/20'
               }`}>
                 01
@@ -426,9 +426,9 @@ export default function App() {
                 currentView === 'student-receipt' ? 'text-white' : 'text-white/40 hover:text-white/70'
               }`}
             >
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                 currentView === 'student-receipt' 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/50 scale-105' 
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/40 scale-110 ring-2 ring-emerald-300/20' 
                   : 'border border-white/20'
               }`}>
                 02
@@ -447,9 +447,9 @@ export default function App() {
                   currentView === 'admin' ? 'text-white' : 'text-white/40 hover:text-white/70'
                 }`}
               >
-                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
                   currentView === 'admin' 
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/50 scale-105' 
+                    ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/40 scale-110 ring-2 ring-teal-300/20' 
                     : 'border border-white/20 hover:border-white/40'
                 }`}>
                   <Settings className="h-3.5 w-3.5" />
@@ -479,33 +479,33 @@ export default function App() {
 
           </nav>
 
-          {/* Real-time Registered Students Count Badge */}
-          <div className="mt-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-inner">
-            <div className="h-12 w-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 border border-indigo-500/30 shrink-0">
+          {/* Real-time Registered Students Count Badge with custom mint theme */}
+          <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 shadow-inner">
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300 border border-emerald-500/30 shrink-0">
               <Users className="h-6 w-6" />
             </div>
             <div className="text-right flex-1">
-              <p className="text-[10px] text-indigo-300 uppercase tracking-wider font-bold">عدد الطلبة المسجلين / Total Inscrits</p>
+              <p className="text-[10px] text-emerald-300 uppercase tracking-wider font-bold">عدد الطلبة المسجلين / Total Inscrits</p>
               <p className="text-2xl font-black text-white mt-0.5 font-mono">
-                {registrations.length} <span className="text-xs font-normal text-indigo-300">طالب / Étudiants</span>
+                {registrations.length} <span className="text-xs font-normal text-emerald-300">طالب / Étudiants</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Footer Information badge in Sidebar - Sparkles can be clicked secretly */}
+        {/* Dynamic Footer Information badge in Sidebar */}
         <div className="mt-6 lg:mt-auto pt-4 border-t border-white/10 shrink-0">
           <div className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
             <div 
-              className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/20 text-indigo-200 cursor-pointer select-none group"
+              className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-400/20 text-emerald-200 cursor-pointer select-none group"
               onClick={() => { setShowAdminLogin(true); setLoginError(''); }}
               title="بوابة الدخول للمشرف / Portail Admin"
             >
-              <Sparkles className="h-5 w-5 text-indigo-300 group-hover:animate-spin transition-all" />
+              <Sparkles className="h-5 w-5 text-emerald-300 group-hover:animate-spin transition-all" />
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-white">السنة الجامعية 2025/2026</p>
-              <p className="text-[10px] text-indigo-300">جذع مشترك علوم وتكنولوجيا</p>
+              <p className="text-[10px] text-emerald-300/80">جذع مشترك علوم وتكنولوجيا</p>
             </div>
           </div>
         </div>
@@ -522,17 +522,17 @@ export default function App() {
             title="انقر مرتين للوصول السريع للمشرف / Double-cliquez pour accès admin"
           >
             <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight flex items-center gap-2 justify-center sm:justify-end">
-              <span className="group-hover:text-indigo-600 transition-colors">جامعة عـــــمار ثليجـــــي بــــالأغــــــــــــواط • كليــة التكنـــلــوجــيا</span>
-              <GraduationCap className="h-6 w-6 text-indigo-600 group-hover:scale-110 transition-transform" />
+              <span className="group-hover:text-emerald-700 transition-colors">جامعة عـــــمار ثليجـــــي بــــالأغــــــــــــواط • كليــة التكنـــلــوجــيا</span>
+              <GraduationCap className="h-6 w-6 text-emerald-600 group-hover:scale-110 transition-transform" />
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">
               فرع المهندسين | Ingenieur en science et technologie (ST-ING)
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-3.5 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30">
-              <Users className="h-3.5 w-3.5 text-indigo-500" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-1 text-xs font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/30">
+              <Users className="h-3.5 w-3.5 text-emerald-500" />
               <span>الطلبة المسجلين: <strong className="font-mono text-sm">{registrations.length}</strong></span>
               <span className="text-[10px] opacity-75">/ Inscrits</span>
             </div>
@@ -610,7 +610,7 @@ export default function App() {
                 <p className="text-[10px] text-slate-400 mt-1">Veuillez vous connecter en tant qu'administrateur.</p>
                 <button
                   onClick={() => { setShowAdminLogin(true); setLoginError(''); }}
-                  className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition duration-200 shadow-md"
+                  className="mt-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition duration-200 shadow-md shadow-emerald-600/15"
                 >
                   تسجيل الدخول كمشرف / Se connecter
                 </button>
@@ -650,12 +650,12 @@ export default function App() {
               </button>
 
               {/* Top Banner Accent */}
-              <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 px-6 py-6 text-white text-center">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-800 px-6 py-6 text-white text-center">
                 <div className="inline-flex p-3 bg-white/10 rounded-2xl mb-2.5">
                   <Lock className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-base font-black">تسجيل دخول المشرف</h3>
-                <p className="text-[10px] text-indigo-200 uppercase tracking-widest mt-0.5">Connexion Administrateur</p>
+                <p className="text-[10px] text-emerald-200 uppercase tracking-widest mt-0.5 font-bold">Connexion Administrateur</p>
               </div>
 
               {/* Login Form body */}
@@ -675,13 +675,13 @@ export default function App() {
                 <div className="bg-slate-50 dark:bg-slate-950/50 p-3.5 rounded-xl border border-slate-150 dark:border-slate-850 text-[10px] text-slate-550 dark:text-slate-400 leading-normal text-right">
                   <p className="font-bold text-slate-700 dark:text-slate-300">📌 بوابة الإدارة وتوجيه الرغبات:</p>
                   <p className="mt-1">هذه البوابة مخصصة حصرياً للمشرفين ومسؤولي التخصصات بجامعة الأغواط لتسيير ومتابعة رغبات توجيه طلبة السنة الثانية جذع مشترك.</p>
-                  <p className="mt-1 text-slate-400">يرجى تسجيل الدخول بالبريد الإلكتروني الجامعي المعتمد والرمز السري الخاص بك.</p>
+                  <p className="mt-1">يرجى تسجيل الدخول بالبريد الإلكتروني الجامعي المعتمد والرمز السري الخاص بك.</p>
                   <span className="block font-mono text-[9px] mt-1.5 text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">Accès restreint aux administrateurs et responsables de spécialités.</span>
                 </div>
 
                 {/* Email Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-350 mb-1.5">البريد الإلكتروني / Adresse Email</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-355 mb-1.5 font-sans">البريد الإلكتروني / Adresse Email</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -689,7 +689,7 @@ export default function App() {
                       placeholder="admin@lagh-univ.dz"
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
-                      className="w-full pr-10 pl-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150"
+                      className="w-full pr-10 pl-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150"
                     />
                     <div className="absolute inset-y-0 pr-3 right-0 flex items-center pointer-events-none text-slate-400">
                       <User className="h-4 w-4" />
@@ -699,7 +699,7 @@ export default function App() {
 
                 {/* Password Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-350 mb-1.5">الرمز السري / Mot de passe</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-355 mb-1.5 font-sans">الرمز السري / Mot de passe</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -707,7 +707,7 @@ export default function App() {
                       placeholder="••••••••"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
-                      className="w-full pr-10 pl-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150"
+                      className="w-full pr-10 pl-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150"
                     />
                     <div className="absolute inset-y-0 pr-3 right-0 flex items-center pointer-events-none text-slate-400">
                       <KeyRound className="h-4 w-4" />
@@ -725,7 +725,7 @@ export default function App() {
                 {/* Submit button */}
                 <button
                   type="submit"
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-600/15 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md shadow-emerald-600/15 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Lock className="h-3.5 w-3.5" />
                   <span>دخول لوحة التحكم / Se connecter</span>

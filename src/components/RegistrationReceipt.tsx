@@ -622,34 +622,34 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         </div>
 
         {/* Form Controls / Buttons */}
-        <div className="bg-slate-50 dark:bg-slate-900/80 px-8 py-5 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-3.5 justify-between print:hidden">
+        <div className="bg-slate-50 dark:bg-slate-900/80 px-8 py-5 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-3.5 justify-between items-center print:hidden">
           <button
             onClick={onReset}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-200 text-xs font-semibold cursor-pointer"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-bold cursor-pointer"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className="h-4 w-4" />
             <span>تسجيل طالب جديد / Nouvelle inscription</span>
           </button>
 
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleDownloadPDF}
               disabled={isGeneratingPDF}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition duration-200 text-xs font-semibold cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-400 text-white rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
             >
               {isGeneratingPDF ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Download className="h-3.5 w-3.5" />
+                <Download className="h-4 w-4" />
               )}
               <span>تحميل الوصل PDF / Télécharger le Reçu</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-750 dark:hover:bg-slate-700 rounded-xl shadow-md transition duration-200 text-xs font-semibold cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
             >
-              <Printer className="h-3.5 w-3.5" />
+              <Printer className="h-4 w-4" />
               <span>طباعة الوصل / Imprimer le Reçu</span>
             </button>
           </div>

@@ -410,18 +410,18 @@ export default function RegistrationForm({
           }}
           className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'register'
-              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-md border border-slate-150 dark:border-slate-800'
+              ? 'bg-emerald-700 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
           {isPortalOpen ? (
-            <GraduationCap className="h-4 w-4 text-emerald-500" />
+            <GraduationCap className="h-4 w-4" />
           ) : (
             <Lock className="h-3.5 w-3.5 text-red-500" />
           )}
           <span>تسجيل رغبات جديد / S'inscrire</span>
           {!isPortalOpen && (
-            <span className="text-[9px] bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-black">مغلق</span>
+            <span className="text-[9px] bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded font-bold">مغلق</span>
           )}
         </button>
         <button
@@ -435,7 +435,7 @@ export default function RegistrationForm({
           }}
           className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
             activeTab === 'verify'
-              ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-md border border-slate-150 dark:border-slate-800'
+              ? 'bg-emerald-700 text-white shadow-md'
               : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
@@ -492,7 +492,7 @@ export default function RegistrationForm({
                     
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                      className="px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl shadow-md transition duration-150 flex items-center justify-center gap-2 cursor-pointer shrink-0"
                     >
                       <Search className="h-4 w-4" />
                       <span>بحث وتحقق / Rechercher</span>
@@ -587,7 +587,7 @@ export default function RegistrationForm({
                           </div>
 
                           {/* Action buttons */}
-                          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                          <div className="flex flex-col sm:flex-row gap-4 pt-3">
                             {isPortalOpen ? (
                               <button
                                 type="button"
@@ -604,7 +604,7 @@ export default function RegistrationForm({
                                   setActiveTab('register');
                                   setStep(1);
                                 }}
-                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-200 text-xs font-bold cursor-pointer"
+                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-bold cursor-pointer"
                               >
                                 <Edit className="h-4 w-4 text-slate-500" />
                                 <span>تعديل الرغبات / Modifier les vœux</span>
@@ -618,7 +618,7 @@ export default function RegistrationForm({
                             <button
                               type="button"
                               onClick={() => onViewReceipt(verifiedStudent)}
-                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
+                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
                             >
                               <Printer className="h-4 w-4" />
                               <span>عرض وتحميل الوصل / Voir le reçu</span>

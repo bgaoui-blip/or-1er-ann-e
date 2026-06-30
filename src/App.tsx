@@ -235,15 +235,15 @@ export default function App() {
     }
   };
 
-  // Delete a single registration from admin panel - Restricted to b.gaoui@lagh-univ.dz
+  // Delete a single registration from admin panel - Allowed for any logged-in admin/supervisor
   const handleDeleteRegistration = async (id: string) => {
-    const loggedInAdminEmail = sessionStorage.getItem('jst_admin_email') || '';
-    if (loggedInAdminEmail.toLowerCase().trim() !== 'b.gaoui@lagh-univ.dz') {
-      alert('خطأ: أنت لا تملك صلاحية الحذف! هذا الإجراء مخصص وحصري للأستاذ ب. غاوي فقط. / Seul M. B. Gaoui est autorisé à supprimer !');
+    const isAdminLoggedIn = sessionStorage.getItem('jst_admin_logged_in') === 'true';
+    if (!isAdminLoggedIn) {
+      alert('خطأ: يجب تسجيل الدخول كمسؤول للقيام بهذا الإجراء! / Veuillez vous connecter en tant qu\'administrateur.');
       return;
     }
 
-    if (window.confirm('هل أنت متأكد من حذف هذا التسجيل؟ / Voulez-vous vraiment supprimer cette inscription ?')) {
+    if (window.confirm('هل أنت متأكد من حذف هذا التسجيل نهائياً؟ / Voulez-vous vraiment supprimer cette inscription définitivement ?')) {
       try {
         await deleteDoc(doc(db, 'registrations', id));
         if (activeRegistration && activeRegistration.id === id) {

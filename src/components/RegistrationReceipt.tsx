@@ -116,39 +116,14 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         return;
       }
 
-      // 1. Gather CSS texts from all stylesheets in the document to sanitize OKLCH values
-      const cssTexts: string[] = [];
-      for (const sheet of Array.from(document.styleSheets)) {
-        try {
-          if (sheet.ownerNode instanceof HTMLStyleElement) {
-            cssTexts.push(sheet.ownerNode.textContent || '');
-          } else if (sheet.href) {
-            // Check rules if same-origin, otherwise fallback to fetch
-            try {
-              const rules = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
-              cssTexts.push(rules);
-            } catch {
-              const response = await fetch(sheet.href);
-              const text = await response.text();
-              cssTexts.push(text);
-            }
-          }
-        } catch (e) {
-          console.warn('Could not read styleSheet rules, skipping:', e);
-        }
-      }
-
-      // 2. Sanitize all stylesheet texts by replacing OKLCH color definitions with standard RGB color format
-      const sanitizedCss = cssTexts.map(css => replaceOklchInCss(css)).join('\n');
-
       // Temporarily toggle dark mode to capture a clean high-contrast white document
       const isDark = document.documentElement.classList.contains('dark');
       if (isDark) {
         document.documentElement.classList.remove('dark');
       }
 
-      // A small delay for the browser layout engine to paint light styles
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      // A small delay for the browser layout engine to paint light styles and compute styles
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(element, {
         scale: 2.5, // Crisp, high-resolution rendering
@@ -157,33 +132,41 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         backgroundColor: '#ffffff', // Clean white paper background
         logging: false,
         onclone: (clonedDoc) => {
-          // Replace oklch in inline styles of all cloned elements
-          clonedDoc.querySelectorAll('[style]').forEach(el => {
-            const styleAttr = el.getAttribute('style');
-            if (styleAttr && styleAttr.toLowerCase().includes('oklch')) {
-              el.setAttribute('style', replaceOklchInCss(styleAttr));
-            }
-          });
+          const originalEl = document.getElementById('receipt-print-area');
+          const clonedEl = clonedDoc.getElementById('receipt-print-area');
+          if (!originalEl || !clonedEl) return;
 
-          // Replace oklch in presentation attributes (fill/stroke) of SVG or other elements
-          clonedDoc.querySelectorAll('[fill], [stroke]').forEach(el => {
-            const fill = el.getAttribute('fill');
-            if (fill && fill.toLowerCase().includes('oklch')) {
-              el.setAttribute('fill', replaceOklchInCss(fill));
+          // Helper to copy computed styles from original element to cloned element
+          const copyStyles = (orig: HTMLElement, clon: HTMLElement) => {
+            const computed = window.getComputedStyle(orig);
+            const props = [
+              'backgroundColor', 'color', 'fontFamily', 'fontSize', 'fontWeight',
+              'borderColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor',
+              'borderStyle', 'borderWidth', 'borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth',
+              'borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomLeftRadius', 'borderBottomRightRadius',
+              'padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight',
+              'margin', 'marginTop', 'marginBottom', 'marginLeft', 'marginRight',
+              'display', 'flexDirection', 'alignItems', 'justifyContent', 'gap',
+              'width', 'height', 'boxShadow', 'textAlign', 'direction', 'lineHeight',
+              'fill', 'stroke', 'strokeWidth'
+            ];
+            for (const prop of props) {
+              const val = computed[prop as any];
+              if (val) {
+                clon.style[prop as any] = val;
+              }
             }
-            const stroke = el.getAttribute('stroke');
-            if (stroke && stroke.toLowerCase().includes('oklch')) {
-              el.setAttribute('stroke', replaceOklchInCss(stroke));
-            }
-          });
+          };
 
-          // Remove all original stylesheets from the cloned document to avoid parsing errors
-          clonedDoc.querySelectorAll('style, link[rel="stylesheet"]').forEach(el => el.remove());
-          
-          // Inject our single consolidated, OKLCH-safe style sheet
-          const safeStyle = clonedDoc.createElement('style');
-          safeStyle.textContent = sanitizedCss;
-          clonedDoc.head.appendChild(safeStyle);
+          // Recursively copy styles for the root container and all descendants
+          copyStyles(originalEl, clonedEl);
+          const origKids = originalEl.querySelectorAll('*');
+          const clonKids = clonedEl.querySelectorAll('*');
+          for (let i = 0; i < origKids.length; i++) {
+            if (clonKids[i]) {
+              copyStyles(origKids[i] as HTMLElement, clonKids[i] as HTMLElement);
+            }
+          }
         }
       });
 

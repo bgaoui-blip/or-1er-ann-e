@@ -1061,17 +1061,13 @@ export default function AdminDashboard({
                         {new Date(reg.registrationDate).toLocaleDateString('ar-DZ')}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {isSuperAdmin ? (
-                          <button
-                            onClick={() => onDeleteRegistration(reg.id)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition duration-150 cursor-pointer animate-pulse"
-                            title="حذف التسجيل"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-700 font-bold select-none" title="صلاحية الحذف مخصصة للأستاذ ب. غاوي فقط">-</span>
-                        )}
+                        <button
+                          onClick={() => onDeleteRegistration(reg.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition duration-150 cursor-pointer hover:scale-105"
+                          title="حذف هذا الطالب نهائياً / Supprimer définitivement"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   );

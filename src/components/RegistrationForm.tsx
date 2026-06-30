@@ -360,9 +360,9 @@ export default function RegistrationForm({
                   setDuplicateStudent(null);
                   setHasConfirmedDuplicateAction(false);
                 }}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-200 text-xs font-bold cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-red-750 hover:bg-red-800 text-white rounded-xl shadow-md shadow-red-750/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
               >
-                <ArrowRight className="h-4 w-4 text-slate-500" />
+                <ArrowRight className="h-4 w-4 text-white" />
                 <span>العودة للقائمة الرئيسية / Retour</span>
               </button>
 
@@ -380,7 +380,7 @@ export default function RegistrationForm({
                     setDuplicateStudent(null);
                     setStep(2);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-600/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md shadow-blue-700/10 hover:shadow-lg transition duration-200 text-xs font-bold cursor-pointer"
                 >
                   <Check className="h-4 w-4" />
                   <span>متابعة تغيير الرغبات / Modifier les vœux</span>
@@ -604,9 +604,9 @@ export default function RegistrationForm({
                                   setActiveTab('register');
                                   setStep(1);
                                 }}
-                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-bold cursor-pointer"
+                                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md shadow-blue-700/10 hover:shadow-lg transition duration-150 text-xs font-bold cursor-pointer"
                               >
-                                <Edit className="h-4 w-4 text-slate-500" />
+                                <Edit className="h-4 w-4 text-white" />
                                 <span>تعديل الرغبات / Modifier les vœux</span>
                               </button>
                             ) : (
@@ -618,7 +618,7 @@ export default function RegistrationForm({
                             <button
                               type="button"
                               onClick={() => onViewReceipt(verifiedStudent)}
-                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
+                              className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl shadow-md shadow-emerald-800/10 hover:shadow-lg transition duration-150 text-xs font-bold cursor-pointer"
                             >
                               <Printer className="h-4 w-4" />
                               <span>عرض وتحميل الوصل / Voir le reçu</span>
@@ -1154,7 +1154,7 @@ export default function RegistrationForm({
                   <button
                     type="button"
                     onClick={handleNextStep}
-                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg hover:shadow-indigo-600/20 transition duration-200 text-sm font-semibold cursor-pointer"
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md shadow-blue-700/10 hover:shadow-lg transition duration-200 text-sm font-bold cursor-pointer"
                   >
                     <span>المرحلة التالية: التخصصات / Phase Suivante</span>
                     <ArrowLeft className="h-4 w-4 shrink-0" />
@@ -1319,7 +1319,7 @@ export default function RegistrationForm({
                     disabled={rankedGroups.length < 3}
                     className={`flex items-center gap-2 px-6 py-3 rounded-xl shadow-md transition duration-200 text-sm font-bold ${
                       rankedGroups.length === 3
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/10 hover:shadow-lg hover:shadow-indigo-600/20 cursor-pointer'
+                        ? 'bg-emerald-800 hover:bg-emerald-900 text-white shadow-emerald-800/10 hover:shadow-lg hover:shadow-emerald-800/20 cursor-pointer'
                         : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
                     }`}
                   >

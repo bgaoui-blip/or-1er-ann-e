@@ -625,7 +625,7 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
         <div className="bg-slate-50 dark:bg-slate-900/80 px-8 py-5 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-3.5 justify-between items-center print:hidden">
           <button
             onClick={onReset}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl transition duration-150 text-xs font-bold cursor-pointer"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-red-750 hover:bg-red-800 text-white rounded-xl shadow-md shadow-red-750/10 hover:shadow-lg transition duration-150 text-xs font-bold cursor-pointer"
           >
             <RefreshCw className="h-4 w-4" />
             <span>تسجيل طالب جديد / Nouvelle inscription</span>
@@ -635,7 +635,7 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
             <button
               onClick={handleDownloadPDF}
               disabled={isGeneratingPDF}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-400 text-white rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-emerald-800 hover:bg-emerald-900 disabled:bg-slate-400 text-white rounded-xl shadow-md shadow-emerald-800/10 hover:shadow-lg transition duration-150 text-xs font-bold cursor-pointer"
             >
               {isGeneratingPDF ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -647,7 +647,7 @@ export default function RegistrationReceipt({ registration, onReset }: Registrat
 
             <button
               onClick={handlePrint}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-900 text-white dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl shadow-md transition duration-150 text-xs font-bold cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md shadow-blue-700/10 hover:shadow-lg transition duration-150 text-xs font-bold cursor-pointer"
             >
               <Printer className="h-4 w-4" />
               <span>طباعة الوصل / Imprimer le Reçu</span>
